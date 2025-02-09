@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { GraphService } from '../../services/graph/graph.service';
 
 @Component({
   selector: 'app-graph',
@@ -8,6 +9,6 @@ import { Component } from '@angular/core';
 })
 export class GraphComponent {
 
-  constructor(){}
+  constructor(private graphService: GraphService){}
 
 }
