@@ -8,6 +8,9 @@
     "paths": {
       "graph-visualizer": [
         "./dist/graph-visualizer"
+      ],
+      "tft-graph-visualizer": [
+        "./dist/tft-graph-visualizer"
       ]
     },
     "noImplicitOverride": true,

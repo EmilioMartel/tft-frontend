@@ -1,5 +1,5 @@
 /*
- * Public API Surface of graph-visualizer
+ * Public API Surface of tft-graph-visualizer
  */
 
 export * from './lib/graph.service';

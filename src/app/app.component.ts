@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { GraphComponent } from './components/graph/graph.component';
+import {GraphComponent} from 'tft-graph-visualizer';
 
 @Component({
   selector: 'app-root',

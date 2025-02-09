@@ -124,6 +124,39 @@
           }
         }
       }
+    },
+    "tft-graph-visualizer": {
+      "projectType": "library",
+      "root": "projects/tft-graph-visualizer",
+      "sourceRoot": "projects/tft-graph-visualizer/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/tft-graph-visualizer/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/tft-graph-visualizer/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/tft-graph-visualizer/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "projects/tft-graph-visualizer/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
     }
   }
 }
