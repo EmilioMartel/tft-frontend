@@ -59,7 +59,7 @@ El frontend permite visualizar **estructuras de grafos interactivas**, obtenidas
 
 ### **2️⃣ Clonar el Repositorio**  
 ```bash
-git clone https://github.com/usuario/tft-frontend.git
+git clone https://github.com/EmilioMartel/tft-frontend.git
 cd tft-frontend
 ```
 
