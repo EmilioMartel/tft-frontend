@@ -1,25 +1,25 @@
 import { Component, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GraphService } from '../../services/graph/graph.service';
-import * as d3 from 'd3';
+import { GraphData, GraphService } from '../../../../src/app/services/graph/graph.service';
 
+import * as d3 from 'd3';
 
 @Component({
   selector: 'app-graph',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './graph.component.html',
   styleUrl: './graph.component.css',
 })
 export class GraphComponent {
   constructor(private graphService: GraphService, private el: ElementRef) {
-    // Efecto Reactivo: Cuando el signal cambia, se actualiza el grafo
     effect(() => {
       const graph = this.graphService.graphData();
       if (graph) this.renderInteractiveGraph(graph);
     });
   }
 
-  private renderInteractiveGraph(graph: any): void {
+  private renderInteractiveGraph(graph: GraphData): void {
     const element = this.el.nativeElement;
 
     // Limpiar cualquier SVG anterior antes de renderizar uno nuevo
@@ -34,30 +34,25 @@ export class GraphComponent {
       .append('svg')
       .attr('width', width)
       .attr('height', height)
-      .style('background-color', '#f4f4f4') // Fondo de color
+      .style('background-color', '#f4f4f4') 
       .call(
         d3
-          .zoom<SVGSVGElement, any>() // Habilitar zoom y pan en el SVG
-          .scaleExtent([0, 5]) // Zoom mínimo y máximo
+          .zoom<SVGSVGElement, any>() 
+          .scaleExtent([0, 5]) 
           .on('zoom', (event) => zoomGroup.attr('transform', event.transform))
       );
 
-    const zoomGroup = svg.append('g'); // Agrupar todo para aplicar zoom
+    const zoomGroup = svg.append('g'); 
 
+    // Definir simulación de fuerza para el grafo
     const simulation = d3
       .forceSimulation(graph.nodes)
-      .force(
-        'link',
-        d3
-          .forceLink(graph.links)
-          .id((d: any) => d.id)
-          .distance(50)
-      )
-      .force('charge', d3.forceManyBody().strength(-50)) // Reducimos la repulsión (-50 en vez de -300)
+      .force('link', d3.forceLink(graph.links).id((d: any) => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-50)) 
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(20)) // Evita superposición
-      .force('grouping', d3.forceX(width / 2).strength(0.05)) // Agrupar los nodos dispersos
-      .force('groupingY', d3.forceY(height / 2).strength(0.05)); // Hacer que se agrupen al centro
+      .force('collision', d3.forceCollide().radius(20)) 
+      .force('groupingX', d3.forceX(width / 2).strength(0.05))
+      .force('groupingY', d3.forceY(height / 2).strength(0.05));
 
     // Dibujar enlaces
     const link = zoomGroup
@@ -109,7 +104,7 @@ export class GraphComponent {
       node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
 
       labels
-        .attr('x', (d: any) => d.x + 10) // Mueve el texto junto al nodo
+        .attr('x', (d: any) => d.x + 10)
         .attr('y', (d: any) => d.y + 4);
     });
   }
