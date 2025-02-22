@@ -1,1 +1,12 @@
-<app-graph></app-graph>
+<mat-drawer-container class="example-container" autosize>
+  <mat-drawer #drawer class="example-sidenav" mode="over">
+    <app-graph-menu></app-graph-menu>
+  </mat-drawer>
+  <button type="button" mat-raised-button class="menu-btn" (click)="drawer.toggle()">
+    Menu
+  </button>
+  <div class="example-sidenav-content">
+    <app-graph></app-graph>
+  </div>
+
+</mat-drawer-container>
