@@ -25,8 +25,6 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./graph-menu.component.scss']
 })
 export class GraphMenuComponent {
-  // Si usas Signals, puedes inyectar un Signal<boolean> para controlar la apertura; 
-  // en este ejemplo, para simplificar, usaremos un valor fijo.
   @Input() isOpen!: Signal<boolean>;
 
   graphInfo = {

@@ -1,1 +1,15 @@
-<svg></svg>
+<mat-drawer-container class="example-container" >
+  
+  <mat-drawer #drawer class="example-sidenav" mode="over">
+    <app-graph-menu></app-graph-menu>
+  </mat-drawer>
+
+  <button type="button" mat-raised-button class="menu-btn" (click)="drawer.toggle()">
+    Menu
+  </button>
+
+  <div class="example-sidenav-content">
+    <app-graph-drawer></app-graph-drawer>
+  </div>
+
+</mat-drawer-container>
