@@ -24,8 +24,8 @@ export class GraphComponent {
     // Limpiar cualquier SVG anterior antes de renderizar uno nuevo
     d3.select(element).select('svg').remove();
 
-    const width = 800;
-    const height = 600;
+    const width = '100%';
+    const height = '100%';
 
     // Crear el SVG con fondo de color y agrupar todo en un <g> para aplicar zoom
     const svg = d3
