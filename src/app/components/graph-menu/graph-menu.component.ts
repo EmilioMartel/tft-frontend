@@ -1,12 +1,13 @@
-import { Component, Input, Signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { GraphStateService } from '../../services/graph-state/graph-state.service';
 
 @Component({
   selector: 'app-graph-menu',
@@ -19,13 +20,15 @@ import { FormsModule } from '@angular/forms';
     MatCheckboxModule,
     MatSelectModule,
     MatInputModule,
-    MatSliderModule
+    MatSliderModule,
+  
   ],
   templateUrl: './graph-menu.component.html',
   styleUrls: ['./graph-menu.component.scss']
 })
 export class GraphMenuComponent {
-  @Input() isOpen!: Signal<boolean>;
+  localZoom: number;
+  localNodeWidth: number;
 
   graphInfo = {
     nodes: 61,
@@ -33,19 +36,11 @@ export class GraphMenuComponent {
     totalLength: 210.747
   };
 
-  displayOptions = {
-    zoom: 89.7,
-    nodeWidth: 5.0,
-    randomColors: true
-  };
+  constructor(public graphState: GraphStateService) {
+    this.localZoom = this.graphState.zoom;
+    this.localNodeWidth = this.graphState.nodeWidth;
+  }
 
-  nodeLabels = {
-    custom: false,
-    name: false,
-    length: false
-  };
-
-  blastQuery = '';
 
   drawGraph() {
     console.log('Drawing graph with current settings...');

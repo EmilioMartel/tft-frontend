@@ -1,31 +1,32 @@
 <div class="menu-content">
   <h3>Graph Information</h3>
-  <hr>
+  <hr/>
   <p>Nodes: {{ graphInfo.nodes }}</p>
   <p>Edges: {{ graphInfo.edges }}</p>
   <p>Total Length: {{ graphInfo.totalLength }}</p>
 
   <h3>Graph Drawing</h3>
-  <hr>
-  <button mat-raised-button color="secondary" (click)="drawGraph()">Draw Graph</button>
+  <hr/>
+  <button mat-raised-button color="primary" (click)="drawGraph()">Draw Graph</button>
 
   <h3>Graph Display</h3>
-  <hr>
+  <hr/>
+
   <mat-slider min="10" max="200" step="0.1" showTickMarks discrete>
-    <input matSliderThumb>
+    <input matSliderThumb name="sliderThumbZoom">
   </mat-slider>
-  <p>Zoom: {{ displayOptions.zoom }}%</p>
+  <p>Zoom: {{ 5 }}%</p>
+
 
   <mat-slider min="0" max="100" step="1" showTickMarks discrete>
-    <input matSliderThumb>
+    <input matSliderThumb name="sliderThumbNodeWidth">
   </mat-slider>
-  <p>Node Width: {{ displayOptions.nodeWidth }}</p>
+  <p>Node Width: {{ 5 }}</p>
 
-  <mat-checkbox [(ngModel)]="displayOptions.randomColors">Random Colors</mat-checkbox>
+
+  <mat-checkbox [(ngModel)]="graphState.randomColors">Random Colors</mat-checkbox>
 
   <h3>Node Labels</h3>
-  <hr>
-  <mat-checkbox [(ngModel)]="nodeLabels.name">Name</mat-checkbox>
-
-
+  <hr/>
+  <mat-checkbox [(ngModel)]="graphState.showNodeLabels">Show Labels</mat-checkbox>
 </div>
