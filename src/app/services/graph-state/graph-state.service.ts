@@ -9,8 +9,6 @@ export class GraphStateService {
   private _randomColors = signal(false);
   private _showNodeLabels = signal(false);
 
-  // Getters y setters para permitir la mutabilidad en el template
-
   get zoom() {
     console.log("zoom service:", this._zoom);
 
