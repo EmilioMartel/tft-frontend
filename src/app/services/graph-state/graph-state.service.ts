@@ -10,8 +10,6 @@ export class GraphStateService {
   private _showNodeLabels = signal(false);
 
   get zoom() {
-    console.log("zoom service:", this._zoom);
-
     return this._zoom();
   }
   set zoom(value: number) {
