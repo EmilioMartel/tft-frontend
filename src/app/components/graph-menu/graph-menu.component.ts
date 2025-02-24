@@ -28,18 +28,10 @@ import { GraphService } from '../../services/graph/graph.service';
   styleUrls: ['./graph-menu.component.scss']
 })
 export class GraphMenuComponent {
-  localZoom: number;
-  localNodeWidth: number;
+  
   @Input() graphInfo: { nodes: number; links: number } = { nodes: 0, links: 0 };
 
- 
-
-  constructor(public graphState: GraphStateService, public graphService: GraphService) {
-    this.localZoom = this.graphState.zoom;
-    this.localNodeWidth = this.graphState.nodeWidth;
-  }
-
-
+  constructor(public graphState: GraphStateService, public graphService: GraphService) {}
 
   drawGraph() {
     console.log('Drawing graph with current settings...');
