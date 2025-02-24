@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatSliderModule } from '@angular/material/slider';
 import { GraphStateService } from '../../services/graph-state/graph-state.service';
+import { GraphService } from '../../services/graph/graph.service';
 
 @Component({
   selector: 'app-graph-menu',
@@ -29,17 +30,15 @@ import { GraphStateService } from '../../services/graph-state/graph-state.servic
 export class GraphMenuComponent {
   localZoom: number;
   localNodeWidth: number;
+  @Input() graphInfo: { nodes: number; links: number } = { nodes: 0, links: 0 };
 
-  graphInfo = {
-    nodes: 61,
-    edges: 82,
-    totalLength: 210.747
-  };
+ 
 
-  constructor(public graphState: GraphStateService) {
+  constructor(public graphState: GraphStateService, public graphService: GraphService) {
     this.localZoom = this.graphState.zoom;
     this.localNodeWidth = this.graphState.nodeWidth;
   }
+
 
 
   drawGraph() {

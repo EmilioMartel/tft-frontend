@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GraphData, GraphService } from '../../services/graph/graph.service';
 import { GraphStateService } from '../../services/graph-state/graph-state.service';
@@ -14,9 +14,12 @@ import * as d3 from 'd3';
 export class GraphDrawerComponent {
   private graphState = inject(GraphStateService);
   private graphService = inject(GraphService);
-  private el = inject(ElementRef);
+  private elementRef = inject(ElementRef);
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private zoomGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
+
+  @Output() graphInfo = new EventEmitter<{ nodes: number; links: number }>();
+
 
   constructor() {
     // Effect para actualizar la visualización cada vez que cambian los valores en el servicio.
@@ -43,15 +46,18 @@ export class GraphDrawerComponent {
     effect(() => {
       const graph = this.graphService.graphData();
       if (graph) {
+        this.graphInfo.emit({ nodes: graph.nodes.length, links: graph.links.length });
         this.renderInteractiveGraph(graph);
       }
     });
   }
 
   private renderInteractiveGraph(graph: GraphData): void {
-    const element = this.el.nativeElement;
+    const element = this.elementRef.nativeElement;
     // Elimina cualquier SVG anterior
     d3.select(element).select('svg').remove();
+
+    this.graphInfo.emit({ nodes: graph.nodes.length, links: graph.links.length });
 
     const width = '100%';
     const height = '100%';

@@ -1,7 +1,6 @@
-<mat-drawer-container class="example-container" >
-  
+<mat-drawer-container class="example-container">
   <mat-drawer #drawer class="example-sidenav" mode="over">
-    <app-graph-menu></app-graph-menu>
+    <app-graph-menu [graphInfo]="graphData"></app-graph-menu>
   </mat-drawer>
 
   <button type="button" mat-raised-button class="menu-btn" (click)="drawer.toggle()">
@@ -9,7 +8,6 @@
   </button>
 
   <div class="example-sidenav-content">
-    <app-graph-drawer></app-graph-drawer>
+    <app-graph-drawer (graphInfo)="graphData = $event"></app-graph-drawer>
   </div>
-
 </mat-drawer-container>

@@ -19,4 +19,6 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class GraphComponent {
   showFiller = false
+  graphData = { nodes: 0, links: 0 };
+
 }
