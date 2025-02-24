@@ -13,16 +13,20 @@
   <h3>Graph Display</h3>
   <hr/>
 
-  <mat-slider min="0.5" max="5" step="0.1" showTickMarks discrete>
-    <input matSliderThumb name="sliderThumbZoom" [(ngModel)]="graphState.zoom">
-  </mat-slider>
-  <p><b>Zoom: {{ graphState.zoom *20}}%</b></p>
+  <div class="columns-pair">
+    <a><b>Zoom: </b></a>
+    <mat-slider min="0.5" max="5" step="0.1" showTickMarks discrete>
+      <input matSliderThumb name="sliderThumbZoom" [(ngModel)]="graphState.zoom">
+    </mat-slider>
+  </div>
+  
 
-
-  <mat-slider min="1" max="20" step="0.5" showTickMarks discrete>
-    <input matSliderThumb name="sliderThumbNodeWidth" [(ngModel)]="graphState.nodeWidth">
-  </mat-slider>
-  <p><b>Node Width: {{ graphState.nodeWidth }}</b></p>
+  <div class="columns-pair">
+    <a><b>Node Width:</b></a>
+    <mat-slider min="1" max="20" step="0.5" showTickMarks discrete>
+      <input matSliderThumb name="sliderThumbNodeWidth" [(ngModel)]="graphState.nodeWidth">
+    </mat-slider>  
+  </div>
 
 
   <mat-checkbox [(ngModel)]="graphState.randomColors">Random Colors</mat-checkbox>

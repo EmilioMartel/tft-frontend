@@ -25,7 +25,7 @@ import { GraphService } from '../../services/graph/graph.service';
   
   ],
   templateUrl: './graph-menu.component.html',
-  styleUrls: ['./graph-menu.component.scss']
+  styleUrls: ['./graph-menu.component.css']
 })
 export class GraphMenuComponent {
   
