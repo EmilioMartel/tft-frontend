@@ -1,0 +1,37 @@
+<div class="menu-content">
+  <h3>Graph Information</h3>
+  <hr/>
+  <b>
+    <p>Nodes: {{ graphInfo.nodes }}</p>
+    <p>Edges: {{ graphInfo.links }}</p>
+    <p>Total Length: {{ 200 }}</p>
+  </b>
+  <h3>Graph Drawing</h3>
+  <hr/>
+  <button mat-raised-button color="primary" (click)="drawGraph()">Draw Graph</button>
+
+  <h3>Graph Display</h3>
+  <hr/>
+
+  <div class="columns-pair">
+    <a><b>Zoom: </b></a>
+    <mat-slider min="0.5" max="5" step="0.1" showTickMarks discrete>
+      <input matSliderThumb name="sliderThumbZoom" [(ngModel)]="graphState.zoom">
+    </mat-slider>
+  </div>
+  
+
+  <div class="columns-pair">
+    <a><b>Node Width:</b></a>
+    <mat-slider min="1" max="20" step="0.5" showTickMarks discrete>
+      <input matSliderThumb name="sliderThumbNodeWidth" [(ngModel)]="graphState.nodeWidth">
+    </mat-slider>  
+  </div>
+
+
+  <mat-checkbox [(ngModel)]="graphState.randomColors">Random Colors</mat-checkbox>
+
+  <h3>Node Labels</h3>
+  <hr/>
+  <mat-checkbox [(ngModel)]="graphState.showNodeLabels">Show Labels</mat-checkbox>
+</div>

@@ -1,0 +1,9 @@
+.columns-pair{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+} 
+
+a {
+  width: 90px;
+}

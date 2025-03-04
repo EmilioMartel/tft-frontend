@@ -32,7 +32,6 @@ export class GraphService {
 
   fetchGraph(): void {
     this.http.get<any>(this.apiUrl).subscribe((data) => {
-      console.log('Datos recibidos del backend:', data);
 
       const nodes: Node[] = Array.isArray(data.nodes) ? data.nodes : [];
       const rawLinks: { source: string; target: string }[] = Array.isArray(data.links) ? data.links : [];
