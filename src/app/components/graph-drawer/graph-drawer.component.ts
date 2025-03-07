@@ -67,7 +67,7 @@ export class GraphDrawerComponent {
     // Inicializar comportamiento de zoom
     this.zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 5])
+      .extent([[0,0],[100,100]])
       .on('zoom', (event) => this.zoomGroup.attr('transform', event.transform));
 
     // Aplicar zoom inicial

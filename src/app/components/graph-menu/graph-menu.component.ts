@@ -38,7 +38,6 @@ export class GraphMenuComponent {
     return this.graphState.zoom;
   }
   set zoom(value: number) {
-    console.log('Setting zoom to', value);
     this.graphState.zoom = value;
   }
 
