@@ -1,13 +1,19 @@
-<mat-drawer-container class="example-container">
-  <mat-drawer #drawer class="example-sidenav" mode="over">
+<nz-drawer
+  #drawer
+  [nzVisible]="drawerVisible"
+  nzPlacement="left"
+  nzClosable="true"
+  [nzWidth]="300"
+  (nzOnClose)="close()">
+  <ng-container *nzDrawerContent>
     <app-graph-menu [graphInfo]="graphData"></app-graph-menu>
-  </mat-drawer>
+  </ng-container>
+</nz-drawer>
 
-  <button type="button" mat-raised-button class="menu-btn" (click)="drawer.toggle()">
-    Menu
-  </button>
+<button nz-button nzType="primary" class="menu-btn" (click)="drawerVisible = !drawerVisible">
+  Menu
+</button>
 
-  <div class="example-sidenav-content">
-    <app-graph-drawer (graphInfo)="graphData = $event"></app-graph-drawer>
-  </div>
-</mat-drawer-container>
+<div class="example-sidenav-content">
+  <app-graph-drawer (graphInfo)="graphData = $event"></app-graph-drawer>
+</div>
