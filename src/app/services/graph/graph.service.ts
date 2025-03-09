@@ -22,7 +22,6 @@ export interface GraphData {
 })
 export class GraphService {
   private apiUrl = 'http://localhost:3000/api/graph';
-
   graphData = signal<GraphData | null>(null);
 
   constructor(private http: HttpClient) {
@@ -35,12 +34,16 @@ export class GraphService {
   
       this.graphData.set({
         nodes,
-        links: links.map(link => ({
-          source: nodesMap.get(link.source.toString())!,
-          target: nodesMap.get(link.target.toString())!,
-        })),
+        links: this.getLinks(links, nodesMap),
       });
     });
   }
-  
+
+  private getLinks(links: Link[], nodesMap: Map<string, Node>): Link[] {
+    return links.map(link => ({
+      source: nodesMap.get(link.source.toString())!,
+      target: nodesMap.get(link.target.toString())!,
+    }));
+  }
+   
 }
