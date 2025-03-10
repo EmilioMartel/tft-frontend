@@ -27,6 +27,15 @@ export class GraphService {
   constructor(private http: HttpClient) {
     this.fetchGraph();
   }
+  uploadFile(file: File): void {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.http.post(`${this.apiUrl}/upload`, formData).subscribe({
+      next: () => console.log('Archivo subido exitosamente'),
+      error: (error) => console.error('Error al subir archivo:', error),
+    });
+  }
 
   fetchGraph(): void {
     this.http.get<GraphData>(this.apiUrl).subscribe(({ nodes = [], links = [] }) => {

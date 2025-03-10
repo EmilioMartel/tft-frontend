@@ -9,7 +9,25 @@
 
   <h3>Graph Drawing</h3>
   <hr />
-  <button nz-button nzType="primary" (click)="drawGraph()">Draw Graph</button>
+  <nz-upload [(nzFileList)]="fileList" [nzBeforeUpload]="beforeUpload">
+    <button 
+      nz-button
+      [disabled]="fileList.length === 1">
+      <nz-icon nzType="upload" />
+      Select File
+    </button>
+  </nz-upload>
+  <br />
+  <br />
+  <button
+    nz-button
+    nzType="primary"
+    [nzLoading]="uploading"
+    (click)="handleUpload()"
+    [disabled]="fileList.length === 0"
+  >
+    {{ uploading ? 'Uploading' : 'Start Upload' }}
+  </button>
 
   <h3>Graph Display</h3>
   <hr />
