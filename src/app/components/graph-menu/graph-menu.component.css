@@ -1,9 +1,9 @@
-.columns-pair{
+.columns-pair {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-} 
+  align-items: start; 
+  margin-bottom: 10px;
+}
 
-a {
-  width: 90px;
+h2:not(:first-child) {
+  margin-top: 20px;
 }

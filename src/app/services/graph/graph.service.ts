@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Node {
   id: string;
@@ -24,17 +25,13 @@ export class GraphService {
   private apiUrl = 'http://localhost:3000/api/graph';
   graphData = signal<GraphData | null>(null);
 
-  constructor(private http: HttpClient) {
-    this.fetchGraph();
-  }
-  uploadFile(file: File): void {
+  constructor(private http: HttpClient) {}
+  
+  uploadFile(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
 
-    this.http.post(`${this.apiUrl}/upload`, formData).subscribe({
-      next: () => console.log('Archivo subido exitosamente'),
-      error: (error) => console.error('Error al subir archivo:', error),
-    });
+    return this.http.post(`${this.apiUrl}/upload`, formData);
   }
 
   fetchGraph(): void {
@@ -54,5 +51,4 @@ export class GraphService {
       target: nodesMap.get(link.target.toString())!,
     }));
   }
-   
 }

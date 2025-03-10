@@ -13,7 +13,7 @@ import * as d3 from 'd3';
 })
 export class GraphDrawerComponent {
   private graphState = inject(GraphStateService);
-  private graphService = inject(GraphService);
+  public graphService = inject(GraphService);
   private elementRef = inject(ElementRef);
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private zoomGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;

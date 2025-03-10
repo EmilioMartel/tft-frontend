@@ -1,23 +1,19 @@
 <div class="menu-content">
-  <h3>Graph Information</h3>
+  <h2>Graph Information</h2>
   <hr />
   <b>
-    <p>Nodes: {{ graphInfo.nodes }}</p>
-    <p>Edges: {{ graphInfo.links }}</p>
-    <p>Total Length: {{ 200 }}</p>
+    <h3>Nodes: {{ graphInfo.nodes }}</h3>
+    <h3>Edges: {{ graphInfo.links }}</h3>
+    <h3>Total Length: {{ 200 }}</h3>
   </b>
-
-  <h3>Graph Drawing</h3>
+  <h2>Graph Drawing</h2>
   <hr />
   <nz-upload [(nzFileList)]="fileList" [nzBeforeUpload]="beforeUpload">
-    <button 
-      nz-button
-      [disabled]="fileList.length === 1">
+    <button nz-button [disabled]="fileList.length === 1">
       <nz-icon nzType="upload" />
       Select File
     </button>
   </nz-upload>
-  <br />
   <br />
   <button
     nz-button
@@ -28,35 +24,52 @@
   >
     {{ uploading ? 'Uploading' : 'Start Upload' }}
   </button>
-
-  <h3>Graph Display</h3>
+  <button
+    nz-button
+    nzType="primary"
+    *ngIf="uploadSuccessful"
+    (click)="drawGraph()"
+  >
+    Draw Graph
+  </button>
+  
+  <h2>Graph Display</h2>
   <hr />
 
-  <div class="columns-pair">
-    <a><b>Zoom: </b></a>
-    <nz-input-number
+  <div class="ant-row">
+    <div class="ant-col-10">
+      <h3>Zoom: </h3>
+    </div>
+    <div class="ant-col-10">
+      <nz-input-number
       [nzMin]="0.5"
       [nzMax]="5"
       [nzStep]="0.2"
       [(ngModel)]="zoom">
     </nz-input-number>
+    </div>
+    
   </div>
   
-  <div class="columns-pair">
-    <a><b>Node Width:</b></a>
-    <nz-input-number
-      [nzMin]="5"
-      [nzMax]="20"
-      [nzStep]="0.5"
-      [(ngModel)]="nodeWidth">
-    </nz-input-number>  
+  <div class="ant-row">
+    <div class="ant-col-10">
+      <h3>Node Width:</h3>
+    </div>
+    <div class="ant-col-10">
+      <nz-input-number
+        [nzMin]="5"
+        [nzMax]="20"
+        [nzStep]="0.5"
+        [(ngModel)]="nodeWidth">
+      </nz-input-number>  
+    </div>
   </div>
 
   <label nz-checkbox [(ngModel)]="randomColors">
     Random Colors
   </label>
 
-  <h3>Node Labels</h3>
+  <h2>Node Labels</h2>
   <hr />
   <label nz-checkbox [(ngModel)]="showNodeLabels">
     Show Labels

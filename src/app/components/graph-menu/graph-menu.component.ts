@@ -31,14 +31,16 @@ import { NzUploadFile, NzUploadModule } from 'ng-zorro-antd/upload';
 })
 export class GraphMenuComponent {
   uploading = false;
+  uploadSuccessful = false;
   fileList: NzUploadFile[] = [];
 
   @Input() graphInfo: { nodes: number; links: number } = { nodes: 0, links: 0 };
 
   constructor(
-    private graphState: GraphStateService,
-    private graphService: GraphService,
-    private messageService: NzMessageService) {}
+    public graphState: GraphStateService,
+    public graphService: GraphService,
+    private messageService: NzMessageService
+  ) {}
 
   beforeUpload = (file: NzUploadFile): boolean => {
     this.fileList = this.fileList.concat(file);
@@ -55,23 +57,28 @@ export class GraphMenuComponent {
     const validExtensions = ['.layout', '.gfa'];
   
     if (!validExtensions.some(ext => file.name.endsWith(ext))) {
-      this.messageService.error('Formato de archivo no permitido. Solo se aceptan archivos .layout o .gfa.');
+      this.messageService.error('Formato de archivo no permitido. Solo se aceptan archivos <b>.layout</b> o <b>.gfa</b>.');
       return;
     }
   
     this.uploading = true;
   
-    this.graphService.uploadFile(file);
-    
-    this.uploading = false;
-    this.fileList = [];
-    this.messageService.success('Archivo subido exitosamente.');
+    this.graphService.uploadFile(file).subscribe({
+      next: () => {
+        this.uploading = false;
+        this.fileList = [];
+        this.uploadSuccessful = true;
+        this.messageService.success('Archivo subido exitosamente.');
+      },
+      error: (error) => {
+        this.uploading = false;
+        this.messageService.error('Error al subir archivo.');
+      }
+    });
   }
   
-  
-  
   drawGraph() {
-    console.log('Drawing graph with current settings...');
+    this.graphService.fetchGraph();
   }
 
   get zoom(): number {
