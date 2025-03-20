@@ -1,37 +1,77 @@
 <div class="menu-content">
-  <h3>Graph Information</h3>
-  <hr/>
+  <h2>Graph Information</h2>
+  <hr />
   <b>
-    <p>Nodes: {{ graphInfo.nodes }}</p>
-    <p>Edges: {{ graphInfo.links }}</p>
-    <p>Total Length: {{ 200 }}</p>
+    <h3>Nodes: {{ graphInfo.nodes }}</h3>
+    <h3>Edges: {{ graphInfo.links }}</h3>
+    <h3>Total Length: {{ 200 }}</h3>
   </b>
-  <h3>Graph Drawing</h3>
-  <hr/>
-  <button mat-raised-button color="primary" (click)="drawGraph()">Draw Graph</button>
+  <h2>Graph Drawing</h2>
+  <hr />
+  <nz-upload [(nzFileList)]="fileList" [nzBeforeUpload]="beforeUpload">
+    <button nz-button [disabled]="fileList.length === 1">
+      <nz-icon nzType="upload" />
+      Select File
+    </button>
+  </nz-upload>
+  <br />
+  <button
+    nz-button
+    nzType="primary"
+    [nzLoading]="uploading"
+    (click)="handleUpload()"
+    [disabled]="fileList.length === 0"
+  >
+    {{ uploading ? 'Uploading' : 'Start Upload' }}
+  </button>
+  <button
+    nz-button
+    nzType="primary"
+    *ngIf="uploadSuccessful"
+    (click)="drawGraph()"
+  >
+    Draw Graph
+  </button>
+  
+  <h2>Graph Display</h2>
+  <hr />
 
-  <h3>Graph Display</h3>
-  <hr/>
-
-  <div class="columns-pair">
-    <a><b>Zoom: </b></a>
-    <mat-slider min="0.5" max="5" step="0.1" showTickMarks discrete>
-      <input matSliderThumb name="sliderThumbZoom" [(ngModel)]="graphState.zoom">
-    </mat-slider>
+  <div class="ant-row">
+    <div class="ant-col-10">
+      <h3>Zoom: </h3>
+    </div>
+    <div class="ant-col-10">
+      <nz-input-number
+      [nzMin]="0.5"
+      [nzMax]="5"
+      [nzStep]="0.2"
+      [(ngModel)]="zoom">
+    </nz-input-number>
+    </div>
+    
   </div>
   
-
-  <div class="columns-pair">
-    <a><b>Node Width:</b></a>
-    <mat-slider min="1" max="20" step="0.5" showTickMarks discrete>
-      <input matSliderThumb name="sliderThumbNodeWidth" [(ngModel)]="graphState.nodeWidth">
-    </mat-slider>  
+  <div class="ant-row">
+    <div class="ant-col-10">
+      <h3>Node Width:</h3>
+    </div>
+    <div class="ant-col-10">
+      <nz-input-number
+        [nzMin]="5"
+        [nzMax]="20"
+        [nzStep]="0.5"
+        [(ngModel)]="nodeWidth">
+      </nz-input-number>  
+    </div>
   </div>
 
+  <label nz-checkbox [(ngModel)]="randomColors">
+    Random Colors
+  </label>
 
-  <mat-checkbox [(ngModel)]="graphState.randomColors">Random Colors</mat-checkbox>
-
-  <h3>Node Labels</h3>
-  <hr/>
-  <mat-checkbox [(ngModel)]="graphState.showNodeLabels">Show Labels</mat-checkbox>
+  <h2>Node Labels</h2>
+  <hr />
+  <label nz-checkbox [(ngModel)]="showNodeLabels">
+    Show Labels
+  </label>
 </div>

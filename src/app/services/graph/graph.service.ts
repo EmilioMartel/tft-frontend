@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Node {
   id: string;
@@ -22,31 +23,32 @@ export interface GraphData {
 })
 export class GraphService {
   private apiUrl = 'http://localhost:3000/api/graph';
-
-  // Inicializamos con null y luego se actualiza a GraphData
   graphData = signal<GraphData | null>(null);
 
-  constructor(private http: HttpClient) {
-    this.fetchGraph();
+  constructor(private http: HttpClient) {}
+  
+  uploadFile(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post(`${this.apiUrl}/upload`, formData);
   }
 
   fetchGraph(): void {
-    this.http.get<any>(this.apiUrl).subscribe((data) => {
-
-      const nodes: Node[] = Array.isArray(data.nodes) ? data.nodes : [];
-      const rawLinks: { source: string; target: string }[] = Array.isArray(data.links) ? data.links : [];
-
-      const nodesMap = new Map(nodes.map((node) => [node.id, node]));
-
-      const processedLinks: Link[] = rawLinks.map((link) => ({
-        source: nodesMap.get(link.source)!,
-        target: nodesMap.get(link.target)!,
-      }));
-
-      console.log('Nodos procesados:', nodes);
-      console.log('Links procesados:', processedLinks);
-
-      this.graphData.set({ nodes, links: processedLinks });
+    this.http.get<GraphData>(this.apiUrl).subscribe(({ nodes = [], links = [] }) => {
+      const nodesMap = new Map(nodes.map(node => [node.id, node]));
+  
+      this.graphData.set({
+        nodes,
+        links: this.getLinks(links, nodesMap),
+      });
     });
+  }
+
+  private getLinks(links: Link[], nodesMap: Map<string, Node>): Link[] {
+    return links.map(link => ({
+      source: nodesMap.get(link.source.toString())!,
+      target: nodesMap.get(link.target.toString())!,
+    }));
   }
 }

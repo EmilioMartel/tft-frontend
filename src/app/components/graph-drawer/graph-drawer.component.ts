@@ -13,7 +13,7 @@ import * as d3 from 'd3';
 })
 export class GraphDrawerComponent {
   private graphState = inject(GraphStateService);
-  private graphService = inject(GraphService);
+  public graphService = inject(GraphService);
   private elementRef = inject(ElementRef);
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private zoomGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -67,7 +67,7 @@ export class GraphDrawerComponent {
     // Inicializar comportamiento de zoom
     this.zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 5])
+      .extent([[0,0],[100,100]])
       .on('zoom', (event) => this.zoomGroup.attr('transform', event.transform));
 
     // Aplicar zoom inicial
