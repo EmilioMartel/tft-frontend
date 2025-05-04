@@ -2,10 +2,10 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// graph.service.ts
 export interface Node {
   id: string;
-  x: number;
-  y: number;
+  points: [number, number][];
 }
 
 export interface Link {
@@ -17,6 +17,8 @@ export interface GraphData {
   nodes: Node[];
   links: Link[];
 }
+
+
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +42,7 @@ export class GraphService {
   
       this.graphData.set({
         nodes,
-        links: this.getLinks(links, nodesMap),
+        links: this.getLinks(links, nodesMap)
       });
     });
   }
