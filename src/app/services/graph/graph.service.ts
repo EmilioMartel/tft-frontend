@@ -2,15 +2,17 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// graph.service.ts
 export interface Node {
   id: string;
   points: [number, number][];
+  x: number;
+  y: number;
 }
 
+
 export interface Link {
-  source: Node;
-  target: Node;
+  source: string;
+  target: string;
 }
 
 export interface GraphData {
@@ -38,19 +40,30 @@ export class GraphService {
 
   fetchGraph(): void {
     this.http.get<GraphData>(this.apiUrl).subscribe(({ nodes = [], links = [] }) => {
-      const nodesMap = new Map(nodes.map(node => [node.id, node]));
+      const processedNodes = nodes.map(node => {
+        const centroid = this.getCentroid(node.points);
+        const x = centroid?.[0] ?? 0;
+        const y = centroid?.[1] ?? 0;
+        // Ajustar puntos al centro local del nodo
+        const points = node.points.map(([px, py]) => [px - x, py - y]) as [number, number][];
+        return { ...node, x, y, points };
+      });
   
       this.graphData.set({
-        nodes,
-        links: this.getLinks(links, nodesMap)
+        nodes: processedNodes,
+        links
       });
     });
   }
 
-  private getLinks(links: Link[], nodesMap: Map<string, Node>): Link[] {
-    return links.map(link => ({
-      source: nodesMap.get(link.source.toString())!,
-      target: nodesMap.get(link.target.toString())!,
-    }));
+  private getCentroid(points: [number, number][]): [number, number] | null {
+    if (!Array.isArray(points) || points.length < 3) return null;
+    const [x, y] = points.reduce(
+      ([sumX, sumY], [px, py]) => [sumX + px, sumY + py],
+      [0, 0]
+    );
+    return [x / points.length, y / points.length];
   }
+  
+
 }

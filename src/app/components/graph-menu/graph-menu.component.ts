@@ -70,7 +70,7 @@ export class GraphMenuComponent {
         this.uploadSuccessful = true;
         this.messageService.success('Archivo subido exitosamente.');
       },
-      error: (error) => {
+      error: (error: any) => {
         this.uploading = false;
         this.messageService.error('Error al subir archivo.');
       }

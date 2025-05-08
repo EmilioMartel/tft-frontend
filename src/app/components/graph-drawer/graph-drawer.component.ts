@@ -33,6 +33,21 @@ export class GraphDrawerComponent {
     effect(() => {
       const graph = this.graphService.graphData();
       if (graph) {
+        // Inicializa coordenadas x/y si no existen
+        graph.nodes.forEach(n => {
+          if (n.x === undefined || n.y === undefined) {
+            const centroid = this.safeCentroid(n.points);
+            if (centroid) {
+              n.x = centroid[0];
+              n.y = centroid[1];
+              n.points = n.points.map(([x, y]) => [x - n.x, y - n.y]);
+            } else {
+              n.x = 0;
+              n.y = 0;
+            }
+          }
+        });
+
         this.graphInfo.emit({ nodes: graph.nodes.length, links: graph.links.length });
         this.renderInteractiveGraph(graph);
       }
@@ -43,61 +58,67 @@ export class GraphDrawerComponent {
     const element = this.elementRef.nativeElement;
     d3.select(element).select('svg').remove();
 
-    this.graphInfo.emit({ nodes: graph.nodes.length, links: graph.links.length });
+    const boundingRect = element.getBoundingClientRect();
 
-    const svg = d3.select(element).append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%')
+    this.svg = d3.select(element).append('svg')
+      .attr('width', boundingRect.width)
+      .attr('height', boundingRect.height)
       .style('background-color', '#f4f4f4');
 
-    this.svg = svg;
-    this.zoomGroup = svg.append('g');
+    this.zoomGroup = this.svg.append('g');
 
     this.zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
+      .extent([[0, 0], [boundingRect.width, boundingRect.height]])
       .on('zoom', (event) => this.zoomGroup.attr('transform', event.transform));
 
-    svg.call(this.zoomBehavior);
-    svg.call(this.zoomBehavior.transform, d3.zoomIdentity.scale(this.graphState.zoom));
+    this.svg.call(this.zoomBehavior);
+    this.svg.call(this.zoomBehavior.transform, d3.zoomIdentity.scale(this.graphState.zoom));
 
-    const pathGenerator = d3.line<[number, number]>()
-      .curve(d3.curveCardinalClosed);
-
+    const pathGenerator = d3.line<[number, number]>().curve(d3.curveCardinalClosed);
     const nodeMap = new Map(graph.nodes.map(n => [n.id, n]));
-
-    const nodePaths = this.zoomGroup.append('g')
+    const self = this;
+    const nodeGroup = this.zoomGroup.append('g')
       .attr('class', 'nodes')
-      .selectAll('path')
-      .data(graph.nodes)
-      .join('path')
-      .attr('d', d => pathGenerator(this.buildThickPath(d.points, this.nodeThickness)))
-      .attr('fill', () => this.graphState.randomColors ? this.getRandomColor() : '#1f77b4')
-      .attr('stroke', '#333')
-      .attr('stroke-width', 1)
+      .selectAll('g')
+      .data(graph.nodes, (d: any) => d.id)
+      .join('g')
+      .attr('class', 'node')
+      .attr('transform', d => `translate(${d.x}, ${d.y})`)
       .call(
         d3.drag<any, any>()
-          .on('start', (event, d) => svg.on('.zoom', null))
-          .on('drag', (event, d) => {
-            d.points = d.points.map(([x, y]: [number, number]) => [x + event.dx, y + event.dy]);
-            d3.select(event.sourceEvent.target).attr('d', pathGenerator(this.buildThickPath(d.points, this.nodeThickness)));
-            this.zoomGroup.selectAll('.labels text')
-              .filter((n: any) => n.id === d.id)
-              .attr('x', d3.polygonCentroid(d.points)[0] + 10)
-              .attr('y', d3.polygonCentroid(d.points)[1] + 4);
-            this.updateLinks(graph, nodeMap);
+          .on('start', function () {
+            d3.select('svg').on('.zoom', null); // desactiva zoom al arrastrar
           })
-          .on('end', () => svg.call(this.zoomBehavior))
-      );
+          .on('drag', function (event, d) {
+            d.x += event.dx;
+            d.y += event.dy;
+      
+            d3.select<SVGGElement, any>(this)
+              .attr('transform', `translate(${d.x}, ${d.y})`);
+      
+            self.updateLinks(
+              self.graphService.graphData()!,
+              new Map(self.graphService.graphData()!.nodes.map((n: { id: any; }) => [n.id, n]))
+            );
+          })
+          .on('end', function () {
+            d3.select<SVGSVGElement, unknown>('svg').call(self.zoomBehavior); // reactiva zoom
+          })
+      )
+      
 
-    this.zoomGroup.append('g')
-      .attr('class', 'labels')
-      .selectAll('text')
-      .data(graph.nodes)
-      .join('text')
+    nodeGroup.append('path')
+      .attr('d', d => pathGenerator(this.buildThickPath(d.points, this.nodeThickness)) || '')
+      .attr('fill', () => this.graphState.randomColors ? this.getRandomColor() : '#1f77b4')
+      .attr('stroke', '#333')
+      .attr('stroke-width', 1);
+
+    nodeGroup.append('text')
       .text(d => d.id)
       .attr('font-size', '12px')
       .attr('fill', '#000')
-      .attr('x', d => d3.polygonCentroid(d.points)[0] + 10)
-      .attr('y', d => d3.polygonCentroid(d.points)[1] + 4)
+      .attr('x', 10)
+      .attr('y', 4)
       .attr('visibility', this.graphState.showNodeLabels ? 'visible' : 'hidden');
 
     this.updateLinks(graph, nodeMap);
@@ -105,15 +126,22 @@ export class GraphDrawerComponent {
 
   private updateLinks(graph: GraphData, nodeMap: Map<string, any>): void {
     const links = graph.links.map(link => {
-      const source = nodeMap.get(link.source.toString())!;
-      const target = nodeMap.get(link.target.toString())!;
-      const centroidSource = d3.polygonCentroid(source.points);
-      const centroidTarget = d3.polygonCentroid(target.points);
+      const source = nodeMap.get(link.source);
+      const target = nodeMap.get(link.target);
+      if (!source || !target) return null;
+
+      const sourceGlobal = source.points.map(([x, y]: [number, number]) => [x + source.x, y + source.y]);
+      const targetGlobal = target.points.map(([x, y]: [number, number]) => [x + target.x, y + target.y]);
+
+      const centroidTarget = this.safeCentroid(targetGlobal);
+      const centroidSource = this.safeCentroid(sourceGlobal);
+      if (!centroidSource || !centroidTarget) return null;
+
       return {
-        source: this.getClosestEdgePoint(source.points, centroidTarget),
-        target: this.getClosestEdgePoint(target.points, centroidSource)
+        source: this.getClosestEdgePoint(sourceGlobal, centroidTarget),
+        target: this.getClosestEdgePoint(targetGlobal, centroidSource)
       };
-    });
+    }).filter((l): l is { source: [number, number]; target: [number, number] } => l !== null);
 
     this.zoomGroup.selectAll('g.links').remove();
 
@@ -141,6 +169,7 @@ export class GraphDrawerComponent {
       const dx = x2 - x1;
       const dy = y2 - y1;
       const len = Math.hypot(dx, dy);
+      if (len === 0) continue;
       const nx = -dy / len;
       const ny = dx / len;
       const offsetX = (thickness / 2) * nx;
@@ -156,8 +185,8 @@ export class GraphDrawerComponent {
     const lenEnd = Math.hypot(dxEnd, dyEnd);
     const nxEnd = -dyEnd / lenEnd;
     const nyEnd = dxEnd / lenEnd;
-    const offsetXEnd = (thickness / 2) * nxEnd;
-    const offsetYEnd = (thickness / 2) * nyEnd;
+    const offsetXEnd = (this.nodeThickness / 2) * nxEnd;
+    const offsetYEnd = (this.nodeThickness / 2) * nyEnd;
     left.push([xEnd + offsetXEnd, yEnd + offsetYEnd]);
     right.push([xEnd - offsetXEnd, yEnd - offsetYEnd]);
 
@@ -179,9 +208,16 @@ export class GraphDrawerComponent {
     return closestPoint;
   }
 
+  private safeCentroid(points: [number, number][]): [number, number] | null {
+    if (!Array.isArray(points) || points.length < 3) return null;
+    const centroid = d3.polygonCentroid(points);
+    if (centroid.some(v => !Number.isFinite(v))) return null;
+    return centroid;
+  }
+
   private updateGraphDisplay(
     zoom: number,
-    nodeWidth: number,
+    _nodeWidth: number,
     randomColors: boolean,
     showNodeLabels: boolean
   ): void {
