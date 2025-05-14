@@ -13,5 +13,11 @@
   z-index: 1000;
 }
 
+.node{
+  width: 500px;
+  height: 100px;
+  background-color: tomato;
+}
+
 
 

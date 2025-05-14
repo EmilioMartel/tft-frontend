@@ -9,15 +9,8 @@ export interface Node {
   y: number;
 }
 
-
-export interface Link {
-  source: string;
-  target: string;
-}
-
 export interface GraphData {
   nodes: Node[];
-  links: Link[];
 }
 
 
@@ -39,7 +32,7 @@ export class GraphService {
   }
 
   fetchGraph(): void {
-    this.http.get<GraphData>(this.apiUrl).subscribe(({ nodes = [], links = [] }) => {
+    this.http.get<GraphData>(this.apiUrl).subscribe(({ nodes = []}) => {
       const processedNodes = nodes.map(node => {
         const centroid = this.getCentroid(node.points);
         const x = centroid?.[0] ?? 0;
@@ -50,14 +43,12 @@ export class GraphService {
       });
   
       this.graphData.set({
-        nodes: processedNodes,
-        links
+        nodes: processedNodes
       });
     });
   }
 
   private getCentroid(points: [number, number][]): [number, number] | null {
-    if (!Array.isArray(points) || points.length < 3) return null;
     const [x, y] = points.reduce(
       ([sumX, sumY], [px, py]) => [sumX + px, sumY + py],
       [0, 0]
