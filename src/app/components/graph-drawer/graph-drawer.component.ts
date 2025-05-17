@@ -28,6 +28,7 @@ export class GraphDrawerComponent {
   private zoomBehavior!: d3.ZoomBehavior<SVGSVGElement, unknown>;
 
   private readonly nodeThickness = 10;
+  private readonly linkThreshold = 15; // Distancia máxima entre extremos
 
   private fixedLinks: {
     source: string;
@@ -49,7 +50,7 @@ export class GraphDrawerComponent {
       this.graphInfo.emit({ nodes: graph.nodes.length, links: 0 });
 
       if (shouldRecalculateLinks) {
-        this.fixedLinks = this.calculateInitialLinks(graph);
+        this.fixedLinks = this.inferLinksByExtremes(graph);
       }
 
       this.renderGraph(graph);
@@ -71,6 +72,66 @@ export class GraphDrawerComponent {
         }
       }
     }
+  }
+
+  private inferLinksByExtremes(graph: GraphData): {
+    source: string;
+    target: string;
+    sourceAnchor: [number, number];
+    targetAnchor: [number, number];
+  }[] {
+    const extremes = graph.nodes.map((node) => {
+      const start = node.points[0];
+      const end = node.points[node.points.length - 1];
+      return {
+        id: node.id,
+        plus: [end[0] + node.x!, end[1] + node.y!] as [number, number],
+        minus: [start[0] + node.x!, start[1] + node.y!] as [number, number],
+      };
+    });
+
+    const links: {
+      source: string;
+      target: string;
+      sourceAnchor: [number, number];
+      targetAnchor: [number, number];
+    }[] = [];
+    const seen = new Set<string>();
+
+    for (const a of extremes) {
+      for (const b of extremes) {
+        if (a.id === b.id) continue;
+
+        for (const dirA of ['plus', 'minus'] as const) {
+          for (const dirB of ['plus', 'minus'] as const) {
+            const pA = a[dirA];
+            const pB = b[dirB];
+
+            const dx = pA[0] - pB[0];
+            const dy = pA[1] - pB[1];
+            const dist = dx * dx + dy * dy;
+
+            if (dist < this.linkThreshold ** 2) {
+              const key = [a.id, b.id].sort().join('-');
+              if (seen.has(key)) continue;
+              seen.add(key);
+
+              const sourceNode = graph.nodes.find(n => n.id === a.id)!;
+              const targetNode = graph.nodes.find(n => n.id === b.id)!;
+
+              links.push({
+                source: a.id,
+                target: b.id,
+                sourceAnchor: [pA[0] - sourceNode.x!, pA[1] - sourceNode.y!],
+                targetAnchor: [pB[0] - targetNode.x!, pB[1] - targetNode.y!],
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return links;
   }
 
   private renderGraph(graph: GraphData): void {
@@ -211,71 +272,6 @@ export class GraphDrawerComponent {
       });
   }
 
-  private calculateInitialLinks(
-    graph: GraphData
-  ): {
-    source: string;
-    target: string;
-    sourceAnchor: [number, number];
-    targetAnchor: [number, number];
-  }[] {
-    const seen = new Set<string>();
-    const links: {
-      source: string;
-      target: string;
-      sourceAnchor: [number, number];
-      targetAnchor: [number, number];
-    }[] = [];
-
-    for (const source of graph.nodes) {
-      const nearest = [...graph.nodes]
-        .filter((t) => t.id !== source.id)
-        .map((t) => {
-          const dx = t.x - source.x;
-          const dy = t.y - source.y;
-          return {
-            node: t,
-            dist: dx * dx + dy * dy,
-          };
-        })
-        .sort((a, b) => a.dist - b.dist)
-        .slice(0, 2);
-
-      for (const { node: target } of nearest) {
-        const key = [source.id, target.id].sort().join('-');
-        if (seen.has(key)) continue;
-        seen.add(key);
-
-        const sourceGlobal: [number, number][] = source.points.map(([x, y]) => [
-          x + source.x,
-          y + source.y,
-        ]);
-        const targetGlobal: [number, number][] = target.points.map(([x, y]) => [
-          x + target.x,
-          y + target.y,
-        ]);
-
-        const c1 = this.safeCentroid(sourceGlobal);
-        const c2 = this.safeCentroid(targetGlobal);
-        if (!c1 || !c2) continue;
-
-        links.push({
-          source: source.id,
-          target: target.id,
-          sourceAnchor: this.getClosestEdgePoint(
-            source.points,
-            [c2[0] - source.x, c2[1] - source.y]
-          ),
-          targetAnchor: this.getClosestEdgePoint(
-            target.points,
-            [c1[0] - target.x, c1[1] - target.y]
-          ),
-        });
-      }
-    }
-
-    return links;
-  }
 
   private buildThickPath(
     points: [number, number][],
