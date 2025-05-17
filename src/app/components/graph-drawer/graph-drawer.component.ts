@@ -29,7 +29,6 @@ export class GraphDrawerComponent {
 
   private readonly nodeThickness = 10;
 
-  // Almacena enlaces fijos con coordenadas relativas al nodo
   private fixedLinks: {
     source: string;
     target: string;
@@ -42,20 +41,18 @@ export class GraphDrawerComponent {
   constructor() {
     effect(() => {
       const graph = this.graphService.graphData();
-      if (graph) {
-        this.initializeNodePositions(graph);
-        this.graphInfo.emit({ nodes: graph.nodes.length, links: 0 });
+      if (!graph) return;
 
-        if (this.fixedLinks.length === 0) {
-          this.fixedLinks = this.calculateInitialLinks(graph);
-        }
+      const shouldRecalculateLinks = this.fixedLinks.length === 0;
 
-        this.renderGraph(graph);
+      this.initializeNodePositions(graph);
+      this.graphInfo.emit({ nodes: graph.nodes.length, links: 0 });
+
+      if (shouldRecalculateLinks) {
+        this.fixedLinks = this.calculateInitialLinks(graph);
       }
-    });
 
-    effect(() => {
-      if (!this.svg) return;
+      this.renderGraph(graph);
       this.updateGraphAppearance();
     });
   }
@@ -172,25 +169,30 @@ export class GraphDrawerComponent {
       });
   }
 
-   private renderLinks(graph: GraphData): void {
+  private renderLinks(graph: GraphData): void {
     this.zoomGroup.selectAll('g.links').remove();
 
-    const linkPaths = this.fixedLinks.map((link) => {
-      const source = graph.nodes.find((n) => n.id === link.source);
-      const target = graph.nodes.find((n) => n.id === link.target);
-      if (!source || !target) return null;
+    const linkPaths = this.fixedLinks
+      .map((link) => {
+        const source = graph.nodes.find((n) => n.id === link.source);
+        const target = graph.nodes.find((n) => n.id === link.target);
+        if (!source || !target) return null;
 
-      return {
-        source: [
-          source.x + link.sourceAnchor[0],
-          source.y + link.sourceAnchor[1],
-        ] as [number, number],
-        target: [
-          target.x + link.targetAnchor[0],
-          target.y + link.targetAnchor[1],
-        ] as [number, number],
-      };
-    }).filter((d): d is { source: [number, number]; target: [number, number] } => d !== null);
+        return {
+          source: [
+            source.x + link.sourceAnchor[0],
+            source.y + link.sourceAnchor[1],
+          ] as [number, number],
+          target: [
+            target.x + link.targetAnchor[0],
+            target.y + link.targetAnchor[1],
+          ] as [number, number],
+        };
+      })
+      .filter(
+        (d): d is { source: [number, number]; target: [number, number] } =>
+          d !== null
+      );
 
     this.zoomGroup
       .append('g')
@@ -228,10 +230,14 @@ export class GraphDrawerComponent {
     for (const source of graph.nodes) {
       const nearest = [...graph.nodes]
         .filter((t) => t.id !== source.id)
-        .map((t) => ({
-          node: t,
-          dist: (t.x - source.x) ** 2 + (t.y - source.y) ** 2,
-        }))
+        .map((t) => {
+          const dx = t.x - source.x;
+          const dy = t.y - source.y;
+          return {
+            node: t,
+            dist: dx * dx + dy * dy,
+          };
+        })
         .sort((a, b) => a.dist - b.dist)
         .slice(0, 2);
 
@@ -240,17 +246,17 @@ export class GraphDrawerComponent {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        const sourceGlobal = source.points.map(([x, y]) => [
+        const sourceGlobal: [number, number][] = source.points.map(([x, y]) => [
           x + source.x,
           y + source.y,
         ]);
-        const targetGlobal = target.points.map(([x, y]) => [
+        const targetGlobal: [number, number][] = target.points.map(([x, y]) => [
           x + target.x,
           y + target.y,
         ]);
 
-        const c1 = this.safeCentroid(sourceGlobal as [number, number][]);
-        const c2 = this.safeCentroid(targetGlobal as [number, number][]);
+        const c1 = this.safeCentroid(sourceGlobal);
+        const c2 = this.safeCentroid(targetGlobal);
         if (!c1 || !c2) continue;
 
         links.push({
@@ -311,12 +317,15 @@ export class GraphDrawerComponent {
   ): [number, number] {
     return points.reduce(
       (closest, point) => {
-        const dist = (point[0] - target[0]) ** 2 + (point[1] - target[1]) ** 2;
+        const dist = (point[0] - target[0]) ** 2 +
+                     (point[1] - target[1]) ** 2;
         return dist < closest.dist ? { point, dist } : closest;
       },
       {
         point: points[0],
-        dist: (points[0][0] - target[0]) ** 2 + (points[0][1] - target[1]) ** 2,
+        dist:
+          (points[0][0] - target[0]) ** 2 +
+          (points[0][1] - target[1]) ** 2,
       }
     ).point;
   }
