@@ -75,64 +75,93 @@ export class GraphDrawerComponent {
   }
 
   private inferLinksByExtremes(graph: GraphData): {
-    source: string;
-    target: string;
-    sourceAnchor: [number, number];
-    targetAnchor: [number, number];
-  }[] {
-    const extremes = graph.nodes.map((node) => {
-      const start = node.points[0];
-      const end = node.points[node.points.length - 1];
-      return {
-        id: node.id,
-        plus: [end[0] + node.x!, end[1] + node.y!] as [number, number],
-        minus: [start[0] + node.x!, start[1] + node.y!] as [number, number],
-      };
-    });
+  source: string;
+  target: string;
+  sourceAnchor: [number, number];
+  targetAnchor: [number, number];
+}[] {
+  const extremes = graph.nodes.map((node) => {
+    const start = node.points[0];
+    const end = node.points[node.points.length - 1];
+    return {
+      id: node.id,
+      plus: [end[0] + node.x!, end[1] + node.y!] as [number, number],
+      minus: [start[0] + node.x!, start[1] + node.y!] as [number, number],
+    };
+  });
 
-    const links: {
-      source: string;
-      target: string;
-      sourceAnchor: [number, number];
-      targetAnchor: [number, number];
-    }[] = [];
-    const seen = new Set<string>();
+  // Disjoint-set (Union-Find) para evitar ciclos
+  const parent = new Map<string, string>();
+  const find = (x: string): string => {
+    if (!parent.has(x)) parent.set(x, x);
+    if (parent.get(x) !== x) parent.set(x, find(parent.get(x)!));
+    return parent.get(x)!;
+  };
+  const union = (x: string, y: string): boolean => {
+    const rootX = find(x);
+    const rootY = find(y);
+    if (rootX === rootY) return false; // ya están conectados
+    parent.set(rootX, rootY);
+    return true;
+  };
 
-    for (const a of extremes) {
-      for (const b of extremes) {
-        if (a.id === b.id) continue;
+  const candidates: {
+    a: typeof extremes[0];
+    b: typeof extremes[0];
+    dirA: 'plus' | 'minus';
+    dirB: 'plus' | 'minus';
+    dist: number;
+  }[] = [];
 
-        for (const dirA of ['plus', 'minus'] as const) {
-          for (const dirB of ['plus', 'minus'] as const) {
-            const pA = a[dirA];
-            const pB = b[dirB];
+  for (const a of extremes) {
+    for (const b of extremes) {
+      if (a.id === b.id) continue;
 
-            const dx = pA[0] - pB[0];
-            const dy = pA[1] - pB[1];
-            const dist = dx * dx + dy * dy;
+      for (const dirA of ['plus', 'minus'] as const) {
+        for (const dirB of ['plus', 'minus'] as const) {
+          const pA = a[dirA];
+          const pB = b[dirB];
+          const dx = pA[0] - pB[0];
+          const dy = pA[1] - pB[1];
+          const dist = dx * dx + dy * dy;
 
-            if (dist < this.linkThreshold ** 2) {
-              const key = [a.id, b.id].sort().join('-');
-              if (seen.has(key)) continue;
-              seen.add(key);
-
-              const sourceNode = graph.nodes.find(n => n.id === a.id)!;
-              const targetNode = graph.nodes.find(n => n.id === b.id)!;
-
-              links.push({
-                source: a.id,
-                target: b.id,
-                sourceAnchor: [pA[0] - sourceNode.x!, pA[1] - sourceNode.y!],
-                targetAnchor: [pB[0] - targetNode.x!, pB[1] - targetNode.y!],
-              });
-            }
+          if (dist < this.linkThreshold ** 2) {
+            candidates.push({ a, b, dirA, dirB, dist });
           }
         }
       }
     }
-
-    return links;
   }
+
+  // Ordenar por menor distancia
+  candidates.sort((a, b) => a.dist - b.dist);
+
+  const links: {
+    source: string;
+    target: string;
+    sourceAnchor: [number, number];
+    targetAnchor: [number, number];
+  }[] = [];
+
+  for (const { a, b, dirA, dirB } of candidates) {
+    if (!union(a.id, b.id)) continue;
+
+    const pA = a[dirA];
+    const pB = b[dirB];
+    const sourceNode = graph.nodes.find(n => n.id === a.id)!;
+    const targetNode = graph.nodes.find(n => n.id === b.id)!;
+
+    links.push({
+      source: a.id,
+      target: b.id,
+      sourceAnchor: [pA[0] - sourceNode.x!, pA[1] - sourceNode.y!],
+      targetAnchor: [pB[0] - targetNode.x!, pB[1] - targetNode.y!],
+    });
+  }
+
+  return links;
+}
+
 
   private renderGraph(graph: GraphData): void {
     const element = this.elementRef.nativeElement;
@@ -307,24 +336,6 @@ export class GraphDrawerComponent {
     return [...left, ...right.reverse()];
   }
 
-  private getClosestEdgePoint(
-    points: [number, number][],
-    target: [number, number]
-  ): [number, number] {
-    return points.reduce(
-      (closest, point) => {
-        const dist = (point[0] - target[0]) ** 2 +
-                     (point[1] - target[1]) ** 2;
-        return dist < closest.dist ? { point, dist } : closest;
-      },
-      {
-        point: points[0],
-        dist:
-          (points[0][0] - target[0]) ** 2 +
-          (points[0][1] - target[1]) ** 2,
-      }
-    ).point;
-  }
 
   private safeCentroid(points: [number, number][]): [number, number] | null {
     const centroid = d3.polygonCentroid(points);
