@@ -5,7 +5,7 @@ import { Injectable, Signal, signal } from '@angular/core';
 })
 export class GraphStateService {
   private _zoom = signal(1);
-  private _nodeWidth = signal(5.0);
+  private _nodeWidth = signal(10);
   private _randomColors = signal(false);
   private _showNodeLabels = signal(false);
 

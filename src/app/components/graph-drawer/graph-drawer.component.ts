@@ -229,7 +229,7 @@ export class GraphDrawerComponent {
     nodeGroup
       .append('path')
       .attr('d', (d) =>
-        pathGen(this.buildThickPath(d.points, this.nodeThickness))
+        pathGen(this.buildThickPath(d.points, this.graphState.nodeWidth))
       )
       .attr('fill', (d) =>
         this.graphState.randomColors ? this.getColorForNode(d.id) : '#1f77b4'
