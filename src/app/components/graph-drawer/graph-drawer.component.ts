@@ -27,8 +27,7 @@ export class GraphDrawerComponent {
   private zoomGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private zoomBehavior!: d3.ZoomBehavior<SVGSVGElement, unknown>;
 
-  private readonly nodeThickness = 10;
-  private readonly linkThreshold = 15; // Distancia máxima entre extremos
+  private readonly linkThreshold = 15;
 
   private fixedLinks: {
     source: string;
@@ -40,39 +39,34 @@ export class GraphDrawerComponent {
   @Output() graphInfo = new EventEmitter<{ nodes: number; links: number }>();
 
   constructor() {
-  // 1. Efecto para inicialización del grafo (solo se ejecuta cuando hay grafo nuevo)
-  effect(() => {
-    const graph = this.graphService.graphData();
-    if (!graph) return;
+    effect(() => {
+      const graph = this.graphService.graphData();
+      if (!graph) return;
 
-    const shouldRecalculateLinks = this.fixedLinks.length === 0;
+      const shouldRecalculateLinks = this.fixedLinks.length === 0;
 
-    this.initializeNodePositions(graph);
-    this.graphInfo.emit({ nodes: graph.nodes.length, links: 0 });
+      this.initializeNodePositions(graph);
+      this.graphInfo.emit({ nodes: graph.nodes.length, links: 0 });
 
-    if (shouldRecalculateLinks) {
-      this.fixedLinks = this.inferLinksByExtremes(graph);
-    }
+      if (shouldRecalculateLinks) {
+        this.fixedLinks = this.inferLinksByExtremes(graph);
+      }
 
-    this.renderGraph(graph);
-  });
+      this.renderGraph(graph);
+    });
 
-  // 2. Efecto para zoom
-  effect(() => {
-    this.updateZoom(this.graphState.zoom);
-  });
+    effect(() => {
+      this.updateZoom(this.graphState.zoom);
+    });
 
-  // 3. Efecto para color aleatorio
-  effect(() => {
-    this.updateNodeFill(this.graphState.randomColors);
-  });
+    effect(() => {
+      this.updateNodeFill(this.graphState.randomColors);
+    });
 
-  // 4. Efecto para etiquetas
-  effect(() => {
-    this.updateNodeLabels(this.graphState.showNodeLabels);
-  });
-}
-
+    effect(() => {
+      this.updateNodeLabels(this.graphState.showNodeLabels);
+    });
+  }
 
   private initializeNodePositions(graph: GraphData): void {
     for (const node of graph.nodes) {
@@ -106,7 +100,6 @@ export class GraphDrawerComponent {
       };
     });
 
-    // Disjoint-set (Union-Find) para evitar ciclos
     const parent = new Map<string, string>();
     const find = (x: string): string => {
       if (!parent.has(x)) parent.set(x, x);
@@ -116,7 +109,7 @@ export class GraphDrawerComponent {
     const union = (x: string, y: string): boolean => {
       const rootX = find(x);
       const rootY = find(y);
-      if (rootX === rootY) return false; // ya están conectados
+      if (rootX === rootY) return false;
       parent.set(rootX, rootY);
       return true;
     };
@@ -149,7 +142,6 @@ export class GraphDrawerComponent {
       }
     }
 
-    // Ordenar por menor distancia
     candidates.sort((a, b) => a.dist - b.dist);
 
     const links: {
@@ -185,8 +177,6 @@ export class GraphDrawerComponent {
 
     d3.select(element).select('svg').remove();
 
-    const bounds = element.getBoundingClientRect();
-
     this.svg = d3
       .select(element)
       .append('svg')
@@ -198,7 +188,7 @@ export class GraphDrawerComponent {
 
     this.zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 10]) // opcional, para evitar zoom infinito
+      .scaleExtent([0.1, 10])
       .on('zoom', (event) => {
         this.zoomGroup.attr('transform', event.transform);
       });
@@ -356,43 +346,37 @@ export class GraphDrawerComponent {
   }
 
   private updateZoom(zoom: number): void {
-  if (!this.svg) return;
-  this.svg
-    .transition()
-    .duration(500)
-    .call(this.zoomBehavior.transform, d3.zoomIdentity.scale(zoom));
-}
-
-private updateNodeFill(useRandom: boolean): void {
-  if (!this.zoomGroup) return;
-
-  this.zoomGroup
-    .selectAll<SVGPathElement, { id: string }>('.nodes path')
-    .attr('fill',  (d: { id: any; }) => {
-      return useRandom ? this.getColorForNode(d.id) : '#1f77b4';
-    });
-}
-
-
-private updateNodeLabels(visible: boolean): void {
-  if (!this.zoomGroup) return;
-  this.zoomGroup
-    .selectAll('.node text')
-    .attr('visibility', visible ? 'visible' : 'hidden');
-}
-
-private nodeColors = new Map<string, string>();
-
-private getColorForNode(id: string): string {
-  if (!this.nodeColors.has(id)) {
-    const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-    this.nodeColors.set(id, color);
+    if (!this.svg) return;
+    this.svg
+      .transition()
+      .duration(500)
+      .call(this.zoomBehavior.transform, d3.zoomIdentity.scale(zoom));
   }
-  return this.nodeColors.get(id)!;
-}
 
+  private updateNodeFill(useRandom: boolean): void {
+    if (!this.zoomGroup) return;
 
-  private getRandomColor(): string {
-    return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    this.zoomGroup
+      .selectAll<SVGPathElement, { id: string }>('.nodes path')
+      .attr('fill', (d: { id: any }) => {
+        return useRandom ? this.getColorForNode(d.id) : '#1f77b4';
+      });
+  }
+
+  private updateNodeLabels(visible: boolean): void {
+    if (!this.zoomGroup) return;
+    this.zoomGroup
+      .selectAll('.node text')
+      .attr('visibility', visible ? 'visible' : 'hidden');
+  }
+
+  private nodeColors = new Map<string, string>();
+
+  private getColorForNode(id: string): string {
+    if (!this.nodeColors.has(id)) {
+      const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+      this.nodeColors.set(id, color);
+    }
+    return this.nodeColors.get(id)!;
   }
 }
