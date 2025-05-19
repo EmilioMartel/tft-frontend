@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import * as d3 from 'd3';
 import { GraphData, GraphService } from '../../services/graph/graph.service';
 import { GraphStateService } from '../../services/graph-state/graph-state.service';
+import { BandageService } from '../../services/bandage/bandage.service';
 
 @Component({
   selector: 'app-graph-drawer',
@@ -38,7 +39,7 @@ export class GraphDrawerComponent {
 
   @Output() graphInfo = new EventEmitter<{ nodes: number; links: number }>();
 
-  constructor() {
+  constructor(private bandageService: BandageService) {
     effect(() => {
       const graph = this.graphService.graphData();
       if (!graph) return;
@@ -46,7 +47,10 @@ export class GraphDrawerComponent {
       const shouldRecalculateLinks = this.fixedLinks.length === 0;
 
       this.initializeNodePositions(graph);
-      this.graphInfo.emit({ nodes: graph.nodes.length, links: 0 });
+      this.bandageService.getGraphInfo().subscribe((info) => {
+        this.graphInfo.emit({ nodes: Number(info['Node count']), links: Number(info['Edge count'])  });
+      });
+
 
       if (shouldRecalculateLinks) {
         this.fixedLinks = this.inferLinksByExtremes(graph);
