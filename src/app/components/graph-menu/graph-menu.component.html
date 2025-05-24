@@ -2,10 +2,29 @@
   <h2>Graph Information</h2>
   <hr />
   <b>
-    <h3>Nodes: {{ graphInfo.nodes }}</h3>
-    <h3>Edges: {{ graphInfo.links }}</h3>
-    <h3>Total Length: {{ 200 }}</h3>
+    <h3>Nodes: {{ stats?.nodeCount ?? 0 }}</h3>
+    <h3>Edges: {{ stats?.edgeCount ?? 0 }}</h3>
+    <h3>Total Length: {{ stats?.totalLength ?? 0 }}</h3>
   </b>
+  <button *ngIf="stats" nz-button nzType="default" (click)="showModal()">
+    <span>More info</span>
+  </button>
+
+  <nz-modal
+    nzDraggable
+    nzCentered
+    [(nzVisible)]="isVisible"
+    nzTitle="Full Graph Information"
+    [nzCancelText]="null"
+    (nzOnCancel)="handleCancel()"
+    (nzOnOk)="handleOk()"
+  >
+    <ng-container *nzModalContent>
+      <div *ngFor="let entry of statsDisplay | keyvalue">
+        <b>{{ entry.key }}:</b> {{ entry.value }}
+      </div>
+    </ng-container>
+  </nz-modal>
   <h2>Graph Drawing</h2>
   <hr />
   <nz-upload [(nzFileList)]="fileList" [nzBeforeUpload]="beforeUpload">
@@ -22,35 +41,35 @@
     (click)="handleUpload()"
     [disabled]="fileList.length === 0"
   >
-    {{ uploading ? 'Uploading' : 'Start Upload' }}
+    {{ uploading ? "Uploading" : "Start Upload" }}
   </button>
   <button
     nz-button
     nzType="primary"
     *ngIf="uploadSuccessful"
-    (click)="drawGraph()"
+    (click)="drawGraphClicked.emit()"
   >
     Draw Graph
   </button>
-  
+
   <h2>Graph Display</h2>
   <hr />
 
   <div class="ant-row">
     <div class="ant-col-10">
-      <h3>Zoom: </h3>
+      <h3>Zoom:</h3>
     </div>
     <div class="ant-col-10">
       <nz-input-number
-      [nzMin]="0.5"
-      [nzMax]="5"
-      [nzStep]="0.2"
-      [(ngModel)]="zoom">
-    </nz-input-number>
+        [nzMin]="0.5"
+        [nzMax]="5"
+        [nzStep]="0.2"
+        [(ngModel)]="zoom"
+      >
+      </nz-input-number>
     </div>
-    
   </div>
-  
+
   <div class="ant-row">
     <div class="ant-col-10">
       <h3>Node Width:</h3>
@@ -60,18 +79,15 @@
         [nzMin]="10"
         [nzMax]="40"
         [nzStep]="0.2"
-        [(ngModel)]="nodeWidth">
-      </nz-input-number>  
+        [(ngModel)]="nodeWidth"
+      >
+      </nz-input-number>
     </div>
   </div>
 
-  <label nz-checkbox [(ngModel)]="randomColors">
-    Random Colors
-  </label>
+  <label nz-checkbox [(ngModel)]="randomColors"> Random Colors </label>
 
   <h2>Node Labels</h2>
   <hr />
-  <label nz-checkbox [(ngModel)]="showNodeLabels">
-    Show Labels
-  </label>
+  <label nz-checkbox [(ngModel)]="showNodeLabels"> Show Labels </label>
 </div>

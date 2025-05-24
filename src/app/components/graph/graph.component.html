@@ -4,16 +4,26 @@
   nzPlacement="left"
   nzClosable="true"
   [nzWidth]="300"
-  (nzOnClose)="close()">
+  (nzOnClose)="close()"
+>
   <ng-container *nzDrawerContent>
-    <app-graph-menu [graphInfo]="graphData"></app-graph-menu>
+    <app-graph-menu
+      [stats]="stats"
+      [statsDisplay]="statsDisplay"
+      (drawGraphClicked)="drawGraph()"
+    ></app-graph-menu>
   </ng-container>
 </nz-drawer>
 
-<button nz-button nzType="primary" class="menu-btn" (click)="drawerVisible = !drawerVisible">
+<button
+  nz-button
+  nzType="primary"
+  class="menu-btn"
+  (click)="drawerVisible = !drawerVisible"
+>
   Menu
 </button>
 
 <div class="example-sidenav-content">
-  <app-graph-drawer (graphInfo)="graphData = $event"></app-graph-drawer>
+  <app-graph-drawer></app-graph-drawer>
 </div>

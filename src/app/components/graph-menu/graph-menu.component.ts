@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -12,7 +12,10 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzUploadFile, NzUploadModule } from 'ng-zorro-antd/upload';
-
+import { BandageService } from '../../services/bandage/bandage.service';
+import { mapGraphStats, GraphStats } from '../../utils/graph-stats.mapper';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { mapGraphStatsToDisplay } from '../../utils/graph-stats.mapper';
 @Component({
   selector: 'app-graph-menu',
   standalone: true,
@@ -23,24 +26,43 @@ import { NzUploadFile, NzUploadModule } from 'ng-zorro-antd/upload';
     NzSliderModule,
     NzCheckboxModule,
     NzInputNumberModule,
-    NzIconModule, 
-    NzUploadModule
+    NzIconModule,
+    NzUploadModule,
+    NzModalModule,
   ],
   templateUrl: './graph-menu.component.html',
-  styleUrls: ['./graph-menu.component.css']
+  styleUrls: ['./graph-menu.component.css'],
 })
 export class GraphMenuComponent {
   uploading = false;
   uploadSuccessful = false;
   fileList: NzUploadFile[] = [];
+  isVisible = false;
 
-  @Input() graphInfo: { nodes: number; links: number } = { nodes: 0, links: 0 };
+  @Input() stats: GraphStats | null = null;
+  @Input() statsDisplay: Record<string, string | number> = {};
+  @Output() drawGraphClicked = new EventEmitter<void>();
 
   constructor(
     public graphState: GraphStateService,
     public graphService: GraphService,
-    private messageService: NzMessageService
+    private messageService: NzMessageService,
+    private bandageService: BandageService
   ) {}
+
+  showModal(): void {
+    this.isVisible = true;
+  }
+
+  handleOk(): void {
+    console.log('Button ok clicked!');
+    this.isVisible = false;
+  }
+
+  handleCancel(): void {
+    console.log('Button cancel clicked!');
+    this.isVisible = false;
+  }
 
   beforeUpload = (file: NzUploadFile): boolean => {
     this.fileList = this.fileList.concat(file);
@@ -52,17 +74,19 @@ export class GraphMenuComponent {
       this.messageService.warning('No hay archivos para subir.');
       return;
     }
-  
-    const file = this.fileList[0] as unknown as File; 
+
+    const file = this.fileList[0] as unknown as File;
     const validExtensions = ['.layout', '.gfa'];
-  
-    if (!validExtensions.some(ext => file.name.endsWith(ext))) {
-      this.messageService.error('Formato de archivo no permitido. Solo se aceptan archivos <b>.layout</b> o <b>.gfa</b>.');
+
+    if (!validExtensions.some((ext) => file.name.endsWith(ext))) {
+      this.messageService.error(
+        'Formato de archivo no permitido. Solo se aceptan archivos <b>.layout</b> o <b>.gfa</b>.'
+      );
       return;
     }
-  
+
     this.uploading = true;
-  
+
     this.graphService.uploadFile(file).subscribe({
       next: () => {
         this.uploading = false;
@@ -73,12 +97,17 @@ export class GraphMenuComponent {
       error: (error: any) => {
         this.uploading = false;
         this.messageService.error('Error al subir archivo.');
-      }
+      },
     });
   }
-  
+
   drawGraph() {
     this.graphService.fetchGraph();
+    this.bandageService.getGraphInfo().subscribe((info) => {
+      const mapped = mapGraphStats(info);
+      this.stats = mapped;
+      this.statsDisplay = mapGraphStatsToDisplay(mapped);
+    });
   }
 
   get zoom(): number {
