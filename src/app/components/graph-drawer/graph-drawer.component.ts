@@ -98,7 +98,8 @@ export class GraphDrawerComponent {
       .selectAll<SVGGElement, Node>('g.node')
       .data(graph.nodes, (d) => d.id)
       .join(
-        (enter) => enter.append('g').attr('class', 'node').call(this.setupDrag()),
+        (enter) =>
+          enter.append('g').attr('class', 'node').call(this.setupDrag()),
         (update) => update,
         (exit) => exit.remove()
       )
@@ -128,20 +129,45 @@ export class GraphDrawerComponent {
       .attr('visibility', showLabels ? 'visible' : 'hidden');
   }
 
+  /** Guardamos anclajes relativos por linkKey = "source|target" */
+  private linkAnchors = new Map<string, { srcRel: Point; dstRel: Point }>();
+
   private renderLinks(graph: GraphData): void {
     // 1) Preparamos el <g> de enlaces
     this.zoomGroup.selectAll('g.links').remove();
     const linksG = this.zoomGroup.append('g').attr('class', 'links');
 
     // 2) Mapa de nodos para acceso O(1)
-    const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
+    const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
 
-    // 3) Filtramos sólo los enlaces que tienen ambos nodos
+    // 3) Filtramos sólo los enlaces válidos
     const validLinks = graph.links.filter(
       ({ source, target }) => nodeMap.has(source) && nodeMap.has(target)
     );
 
-    // 4) Dibujamos cada path usando un helper para la “d”
+    // 4) Para cada enlace, si no existe en linkAnchors lo calculamos
+    validLinks.forEach((link) => {
+      const key = `${link.source}|${link.target}`;
+      if (!this.linkAnchors.has(key)) {
+        const srcNode = nodeMap.get(link.source)!;
+        const dstNode = nodeMap.get(link.target)!;
+
+        // puntos absolutos de los vértices
+        const sPts = this.absolutePoints(srcNode);
+        const tPts = this.absolutePoints(dstNode);
+
+        // buscamos solo UNA VEZ el par más cercano
+        const [a, b] = this.findClosestPair(sPts, tPts);
+
+        // convertimos a relativos al nodo
+        const srcRel: Point = [a[0] - srcNode.x!, a[1] - srcNode.y!];
+        const dstRel: Point = [b[0] - dstNode.x!, b[1] - dstNode.y!];
+
+        this.linkAnchors.set(key, { srcRel, dstRel });
+      }
+    });
+
+    // 5) Dibujamos cada path usando los anclajes almacenados
     linksG
       .selectAll<SVGPathElement, Link>('path')
       .data(validLinks, (l) => `${l.source}|${l.target}`)
@@ -149,28 +175,25 @@ export class GraphDrawerComponent {
       .attr('stroke', '#999')
       .attr('stroke-width', 1)
       .attr('fill', 'none')
-      .attr('d', (l) => this.computeLinkD(l, nodeMap));
+      .attr('d', (link) => {
+        const key = `${link.source}|${link.target}`;
+        const { srcRel, dstRel } = this.linkAnchors.get(key)!;
+        const srcNode = nodeMap.get(link.source)!;
+        const dstNode = nodeMap.get(link.target)!;
+
+        // volvemos a coordenadas absolutas sumando la posición actual del nodo
+        const A: Point = [srcNode.x! + srcRel[0], srcNode.y! + srcRel[1]];
+        const B: Point = [dstNode.x! + dstRel[0], dstNode.y! + dstRel[1]];
+
+        return `M${A[0]},${A[1]} L${B[0]},${B[1]}`;
+      });
   }
 
-  /** Devuelve la “d” que conecta los dos puntos más cercanos */
-  private computeLinkD(link: Link, nodeMap: Map<string, Node>): string {
-    const src = nodeMap.get(link.source)!;
-    const dst = nodeMap.get(link.target)!;
-
-    const [a, b] = this.findClosestPair(
-      this.transformRelativePointsToAbsolutePointsByNodeCoordinates(src),
-      this.transformRelativePointsToAbsolutePointsByNodeCoordinates(dst)
-    );
-
-    return `M${a[0]},${a[1]} L${b[0]},${b[1]}`;
-  }
-
-  private transformRelativePointsToAbsolutePointsByNodeCoordinates(
-    node: Node
-  ): Point[] {
-    const x0 = node.x ?? 0;
-    const y0 = node.y ?? 0;
-    return node.points.map(([px, py]) => [px + x0, py + y0]);
+  /** helper que tenías antes */
+  private absolutePoints(node: Node): Point[] {
+    const x0 = node.x ?? 0,
+      y0 = node.y ?? 0;
+    return node.points.map(([px, py]) => [px + x0, py + y0] as Point);
   }
 
   /** Busca el par (p∈A, q∈B) con distancia² mínima */
