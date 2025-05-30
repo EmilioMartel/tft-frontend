@@ -14,4 +14,8 @@ export class BandageService {
   getGraphInfo(): Observable<Record<string, string | number>> {
     return this.http.get<Record<string, string | number>>(this.apiUrl);
   }
+
+  getGraphLayout(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/layout`);
+  }
 }

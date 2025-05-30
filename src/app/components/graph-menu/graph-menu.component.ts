@@ -16,6 +16,7 @@ import { BandageService } from '../../services/bandage/bandage.service';
 import { mapGraphStats, GraphStats } from '../../utils/graph-stats.mapper';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { mapGraphStatsToDisplay } from '../../utils/graph-stats.mapper';
+import { finalize, switchMap } from 'rxjs';
 @Component({
   selector: 'app-graph-menu',
   standalone: true,
@@ -87,18 +88,24 @@ export class GraphMenuComponent {
 
     this.uploading = true;
 
-    this.graphService.uploadFile(file).subscribe({
-      next: () => {
-        this.uploading = false;
-        this.fileList = [];
-        this.uploadSuccessful = true;
-        this.messageService.success('Archivo subido exitosamente.');
-      },
-      error: (error: any) => {
-        this.uploading = false;
-        this.messageService.error('Error al subir archivo.');
-      },
-    });
+    this.graphService
+      .uploadFile(file)
+      .pipe(
+        switchMap(() => this.bandageService.getGraphLayout()),
+        finalize(() => (this.uploading = false))
+      )
+      .subscribe({
+        next: (layout) => {
+          this.fileList = [];
+          this.uploadSuccessful = true;
+          this.messageService.success('Archivo subido y layout generado.');
+          console.log('Layout recibido:', layout);
+        },
+        error: (err) => {
+          console.error('Error en el flujo completo:', err);
+          this.messageService.error('Error al procesar el layout.');
+        },
+      });
   }
 
   drawGraph() {
