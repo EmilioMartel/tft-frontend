@@ -56,12 +56,10 @@ export class GraphMenuComponent {
   }
 
   handleOk(): void {
-    console.log('Button ok clicked!');
     this.isVisible = false;
   }
 
   handleCancel(): void {
-    console.log('Button cancel clicked!');
     this.isVisible = false;
   }
 
@@ -99,7 +97,6 @@ export class GraphMenuComponent {
           this.fileList = [];
           this.uploadSuccessful = true;
           this.messageService.success('Archivo subido y layout generado.');
-          console.log('Layout recibido:', layout);
         },
         error: (err) => {
           console.error('Error en el flujo completo:', err);
