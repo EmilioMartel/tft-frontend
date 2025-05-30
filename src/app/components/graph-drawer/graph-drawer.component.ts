@@ -5,8 +5,11 @@ import {
   GraphData,
   GraphService,
   Link,
+  Node,
 } from '../../services/graph/graph.service';
 import { GraphStateService } from '../../services/graph-state/graph-state.service';
+
+type Point = [number, number];
 
 @Component({
   selector: 'app-graph-drawer',
@@ -24,11 +27,9 @@ export class GraphDrawerComponent {
   private zoomGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private zoomBehavior!: d3.ZoomBehavior<SVGSVGElement, unknown>;
 
-  // Genera y memoiza un color por nodo
   private nodeColors = new Map<string, string>();
 
   constructor() {
-    // Sólo reaccionamos cuando el usuario haya llamado a loadGraph()
     effect(() => {
       const graph = this.graphService.graphData();
       if (!graph) return;
@@ -36,18 +37,15 @@ export class GraphDrawerComponent {
       this.renderGraph(graph);
     });
 
-    // Reactividad de zoom, color y etiquetas
     effect(() => this.updateZoom(this.graphState.zoom));
     effect(() => this.updateNodeFill(this.graphState.randomColors));
     effect(() => this.updateNodeLabels(this.graphState.showNodeLabels));
   }
 
-  /** Llamar manualmente (p.e. al click de un botón) para cargar el grafo */
   public loadGraph(): void {
     this.graphService.fetchGraph();
   }
 
-  /** Centra cada nodo en su centroide si no tiene posición */
   private initializeNodePositions(graph: GraphData): void {
     for (const node of graph.nodes) {
       if (node.x == null || node.y == null) {
@@ -62,7 +60,6 @@ export class GraphDrawerComponent {
     }
   }
 
-  /** Prepara SVG, zoom y llama a dibujar nodos y enlaces */
   private renderGraph(graph: GraphData): void {
     const el = this.elementRef.nativeElement;
     const prev = this.svg ? d3.zoomTransform(this.svg.node()!) : null;
@@ -87,99 +84,112 @@ export class GraphDrawerComponent {
     this.renderLinks(graph);
   }
 
-  /** Dibuja los contornos gruesos de los nodos y sus etiquetas */
   private renderNodes(graph: GraphData): void {
-    const lineGen = d3.line<[number, number]>().curve(d3.curveCardinalClosed);
+    const lineGen = d3.line<Point>().curve(d3.curveCardinalClosed);
+    const showLabels = this.graphState.showNodeLabels;
+    const defaultFill = '#1f77b4';
 
-    const nodesG = this.zoomGroup
-      .append('g')
-      .attr('class', 'nodes')
-      .selectAll<SVGGElement, any>('g')
-      .data(graph.nodes, (d: any) => d.id)
-      .join('g')
-      .attr('class', 'node')
-      .attr('transform', (d) => `translate(${d.x},${d.y})`)
-      .call(this.setupDrag());
+    // Helper para decidir el color de relleno
+    const getFill = (d: Node) =>
+      this.graphState.randomColors ? this.getColorForNode(d.id) : defaultFill;
 
-    nodesG
-      .append('path')
+    // 1) Data‐join de los grupos <g.node>
+    const nodes = this.zoomGroup
+      .selectAll<SVGGElement, Node>('g.node')
+      .data(graph.nodes, (d) => d.id)
+      .join(
+        (enter) => enter.append('g').attr('class', 'node').call(this.setupDrag()),
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr('transform', (d) => `translate(${d.x},${d.y})`);
+
+    // 2) Dibujamos las formas gruesas (paths)
+    nodes
+      .selectAll<SVGPathElement, Node>('path')
+      .data((d) => [d]) // rebind each datum for the shape
+      .join('path')
       .attr('d', (d) =>
         lineGen(this.buildThickPath(d.points, this.graphState.nodeWidth))
       )
-      .attr('fill', (d) =>
-        this.graphState.randomColors ? this.getColorForNode(d.id) : '#1f77b4'
-      )
+      .attr('fill', getFill)
       .attr('stroke', '#333')
       .attr('stroke-width', 1);
 
-    nodesG
-      .append('text')
+    // 3) Dibujamos las etiquetas
+    nodes
+      .selectAll<SVGTextElement, Node>('text')
+      .data((d) => [d])
+      .join('text')
       .text((d) => d.id)
       .attr('x', 10)
       .attr('y', 4)
       .attr('font-size', '12px')
-      .attr(
-        'visibility',
-        this.graphState.showNodeLabels ? 'visible' : 'hidden'
-      );
+      .attr('visibility', showLabels ? 'visible' : 'hidden');
   }
 
- private renderLinks(graph: GraphData): void {
-  this.zoomGroup.selectAll('g.links').remove();
-  const g = this.zoomGroup.append('g').attr('class', 'links');
+  private renderLinks(graph: GraphData): void {
+    // 1) Preparamos el <g> de enlaces
+    this.zoomGroup.selectAll('g.links').remove();
+    const linksG = this.zoomGroup.append('g').attr('class', 'links');
 
-  // 1) Filtrar solo enlaces válidos
-  const valid = graph.links.filter(
-    l =>
-      graph.nodes.some(n => n.id === l.source) &&
-      graph.nodes.some(n => n.id === l.target)
-  );
+    // 2) Mapa de nodos para acceso O(1)
+    const nodeMap = new Map(graph.nodes.map((node) => [node.id, node]));
 
-  console.log('[GraphDrawer] total links=', graph.links.length, ' valid=', valid.length);
+    // 3) Filtramos sólo los enlaces que tienen ambos nodos
+    const validLinks = graph.links.filter(
+      ({ source, target }) => nodeMap.has(source) && nodeMap.has(target)
+    );
 
-  g.selectAll<SVGPathElement, any>('path')
-    .data(valid)
-    .join('path')
-    .attr('stroke', '#999')
-    .attr('stroke-width', 1)
-    .attr('fill', 'none')
-    .attr('d', l => {
-      const sNode = graph.nodes.find(n => n.id === l.source)!;
-      const tNode = graph.nodes.find(n => n.id === l.target)!;
+    // 4) Dibujamos cada path usando un helper para la “d”
+    linksG
+      .selectAll<SVGPathElement, Link>('path')
+      .data(validLinks, (l) => `${l.source}|${l.target}`)
+      .join('path')
+      .attr('stroke', '#999')
+      .attr('stroke-width', 1)
+      .attr('fill', 'none')
+      .attr('d', (l) => this.computeLinkD(l, nodeMap));
+  }
 
-      // 2) Convertimos puntos relativos a coordenadas absolutas
-      const sPts = sNode.points.map(([px, py]) =>
-        [px + sNode.x!, py + sNode.y!] as [number, number]
-      );
-      const tPts = tNode.points.map(([px, py]) =>
-        [px + tNode.x!, py + tNode.y!] as [number, number]
-      );
+  /** Devuelve la “d” que conecta los dos puntos más cercanos */
+  private computeLinkD(link: Link, nodeMap: Map<string, Node>): string {
+    const src = nodeMap.get(link.source)!;
+    const dst = nodeMap.get(link.target)!;
 
-      // 3) Buscamos el par de vértices (uno en sPts, otro en tPts) con menor distancia²
-      let minD = Infinity;
-      let anchorS: [number, number] = sPts[0];
-      let anchorT: [number, number] = tPts[0];
+    const [a, b] = this.findClosestPair(
+      this.transformRelativePointsToAbsolutePointsByNodeCoordinates(src),
+      this.transformRelativePointsToAbsolutePointsByNodeCoordinates(dst)
+    );
 
-      for (const pS of sPts) {
-        for (const pT of tPts) {
-          const dx = pS[0] - pT[0];
-          const dy = pS[1] - pT[1];
-          const d2 = dx * dx + dy * dy;
-          if (d2 < minD) {
-            minD = d2;
-            anchorS = pS;
-            anchorT = pT;
-          }
+    return `M${a[0]},${a[1]} L${b[0]},${b[1]}`;
+  }
+
+  private transformRelativePointsToAbsolutePointsByNodeCoordinates(
+    node: Node
+  ): Point[] {
+    const x0 = node.x ?? 0;
+    const y0 = node.y ?? 0;
+    return node.points.map(([px, py]) => [px + x0, py + y0]);
+  }
+
+  /** Busca el par (p∈A, q∈B) con distancia² mínima */
+  private findClosestPair(A: Point[], B: Point[]): [Point, Point] {
+    let minD2 = Infinity;
+    let best: [Point, Point] = [A[0], B[0]];
+
+    for (const p of A) {
+      for (const q of B) {
+        const d2 = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2;
+        if (d2 < minD2) {
+          minD2 = d2;
+          best = [p, q];
         }
       }
+    }
+    return best;
+  }
 
-      // 4) Dibujamos la línea entre esos dos áncoras
-      return `M${anchorS[0]},${anchorS[1]} L${anchorT[0]},${anchorT[1]}`;
-    });
-}
-
-
-  /** Drag & drop: desactiva zoom y mueve nodo */
   private setupDrag() {
     const self = this;
     return d3
@@ -199,37 +209,66 @@ export class GraphDrawerComponent {
       });
   }
 
-  /** Crea un polígono offset para grosor */
-  private buildThickPath(
-    points: [number, number][],
-    thickness: number
-  ): [number, number][] {
-    const left: [number, number][] = [];
-    const right: [number, number][] = [];
-    for (let i = 0; i < points.length - 1; i++) {
-      const [x1, y1] = points[i];
-      const [x2, y2] = points[i + 1];
-      const dx = x2 - x1,
-        dy = y2 - y1;
-      const len = Math.hypot(dx, dy) || 1;
-      const nx = -dy / len,
-        ny = dx / len;
-      left.push([x1 + (nx * thickness) / 2, y1 + (ny * thickness) / 2]);
-      right.push([x1 - (nx * thickness) / 2, y1 - (ny * thickness) / 2]);
-    }
-    const last = points[points.length - 1];
-    const prev = points[points.length - 2] || last;
-    const dx = last[0] - prev[0],
-      dy = last[1] - prev[1];
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len,
-      ny = dx / len;
-    left.push([last[0] + (nx * thickness) / 2, last[1] + (ny * thickness) / 2]);
-    right.push([
-      last[0] - (nx * thickness) / 2,
-      last[1] - (ny * thickness) / 2,
-    ]);
+  private buildThickPath(points: Point[], thickness: number): Point[] {
+    if (points.length < 2) return [];
+
+    // 1) Calculamos una normal unitaria por vértice
+    const normals = this.computeVertexNormals(points);
+
+    // 2) Generamos las dos “polilíneas” offset
+    const half = thickness / 2;
+    const left = points.map((p, i) => this.offsetPoint(p, normals[i], half));
+    const right = points.map((p, i) => this.offsetPoint(p, normals[i], -half));
+
+    // 3) Concatenamos izquierda + derecha invertida
     return [...left, ...right.reverse()];
+  }
+
+  /**
+   * Calcula una normal unitaria en cada vértice promediando las normales
+   * de los segmentos adyacentes (o usando la única en los extremos)
+   */
+  private computeVertexNormals(points: Point[]): Point[] {
+    const segNormals: Point[] = [];
+
+    // Normales de cada segmento
+    for (let i = 0; i < points.length - 1; i++) {
+      segNormals[i] = this.segmentNormal(points[i], points[i + 1]);
+    }
+
+    const normals: Point[] = [];
+
+    for (let i = 0; i < points.length; i++) {
+      if (i === 0) {
+        normals[i] = segNormals[0];
+      } else if (i === points.length - 1) {
+        normals[i] = segNormals[segNormals.length - 1];
+      } else {
+        // Promediar y normalizar
+        const [nx1, ny1] = segNormals[i - 1];
+        const [nx2, ny2] = segNormals[i];
+        const avgX = nx1 + nx2;
+        const avgY = ny1 + ny2;
+        const len = Math.hypot(avgX, avgY) || 1;
+        normals[i] = [avgX / len, avgY / len];
+      }
+    }
+
+    return normals;
+  }
+
+  /** Normal unitario perpendicular al segmento AB */
+  private segmentNormal(A: Point, B: Point): Point {
+    const dx = B[0] - A[0];
+    const dy = B[1] - A[1];
+    const len = Math.hypot(dx, dy) || 1;
+    // (-dy, dx) es perpendicular; luego normalizamos
+    return [-dy / len, dx / len];
+  }
+
+  /** Desplaza el punto P en dirección N (normal unitario) por 'offset' */
+  private offsetPoint(P: Point, N: Point, offset: number): Point {
+    return [P[0] + N[0] * offset, P[1] + N[1] * offset];
   }
 
   private updateZoom(zoom: number): void {
