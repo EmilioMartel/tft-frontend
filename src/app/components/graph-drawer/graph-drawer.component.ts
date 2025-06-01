@@ -133,6 +133,9 @@ export class GraphDrawerComponent {
   private linkAnchors = new Map<string, { srcRel: Point; dstRel: Point }>();
 
   private renderLinks(graph: GraphData): void {
+    // Limpiamos los anclajes previos
+    this.linkAnchors.clear()
+
     // 1) Preparamos el <g> de enlaces
     this.zoomGroup.selectAll('g.links').remove();
     const linksG = this.zoomGroup.append('g').attr('class', 'links');
