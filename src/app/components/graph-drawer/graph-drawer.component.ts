@@ -20,14 +20,14 @@ type Point = [number, number];
 })
 export class GraphDrawerComponent {
   public graphService = inject(GraphService);
-  private graphState = inject(GraphStateService);
-  private elementRef = inject(ElementRef);
+  private readonly graphState = inject(GraphStateService);
+  private readonly elementRef = inject(ElementRef);
 
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private zoomGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private zoomBehavior!: d3.ZoomBehavior<SVGSVGElement, unknown>;
 
-  private nodeColors = new Map<string, string>();
+  private readonly nodeColors = new Map<string, string>();
 
   constructor() {
     effect(() => {
@@ -85,6 +85,9 @@ export class GraphDrawerComponent {
   }
 
   private renderNodes(graph: GraphData): void {
+    // Limpiamos los anclajes previos
+    this.linkAnchors.clear()
+
     const lineGen = d3.line<Point>().curve(d3.curveCardinalClosed);
     const showLabels = this.graphState.showNodeLabels;
     const defaultFill = '#1f77b4';
@@ -130,12 +133,9 @@ export class GraphDrawerComponent {
   }
 
   /** Guardamos anclajes relativos por linkKey = "source|target" */
-  private linkAnchors = new Map<string, { srcRel: Point; dstRel: Point }>();
+  private readonly linkAnchors = new Map<string, { srcRel: Point; dstRel: Point }>();
 
   private renderLinks(graph: GraphData): void {
-    // Limpiamos los anclajes previos
-    this.linkAnchors.clear()
-
     // 1) Preparamos el <g> de enlaces
     this.zoomGroup.selectAll('g.links').remove();
     const linksG = this.zoomGroup.append('g').attr('class', 'links');

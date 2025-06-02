@@ -75,11 +75,11 @@ export class GraphMenuComponent {
     }
 
     const file = this.fileList[0] as unknown as File;
-    const validExtensions = ['.layout', '.gfa'];
+    const validExtensions = ['.gfa'];
 
     if (!validExtensions.some((ext) => file.name.endsWith(ext))) {
       this.messageService.error(
-        'Formato de archivo no permitido. Solo se aceptan archivos <b>.layout</b> o <b>.gfa</b>.'
+        'Formato de archivo no permitido. Solo se aceptan archivos<b>.gfa</b>.'
       );
       return;
     }

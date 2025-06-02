@@ -1,0 +1,6 @@
+projectKey=tft-frontend
+serverUrl=http://localhost:9000
+serverVersion=25.5.0.107428
+dashboardUrl=http://localhost:9000/dashboard?id=tft-frontend
+ceTaskId=6274dc10-a118-44f3-9936-e4e89956f06c
+ceTaskUrl=http://localhost:9000/api/ce/task?id=6274dc10-a118-44f3-9936-e4e89956f06c
