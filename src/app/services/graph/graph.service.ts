@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface Node {
   id: string;
@@ -24,12 +25,14 @@ export interface GraphData {
 
 @Injectable({ providedIn: 'root' })
 export class GraphService {
-  private readonly graphUrl      = 'http://localhost:3000/api/graph';
-  private readonly parsedGfaUrl  = 'http://localhost:3000/api/graph/parsed-gfa';
+  private readonly graphUrl      = `${environment.HOST_NAME}:${environment.PORT}/api/graph`;
+  private readonly parsedGfaUrl  = `${environment.HOST_NAME}:${environment.PORT}/api/graph/parsed-gfa`;
 
   graphData = signal<GraphData | null>(null);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('GraphService initialized with API URL:', this.graphUrl);
+  }
 
   uploadFile(file: File) {
     const fd = new FormData();

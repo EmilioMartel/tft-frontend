@@ -1,15 +1,18 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BandageService {
 
-  private readonly apiUrl = 'http://localhost:3000/api/bandage';
+  private readonly apiUrl = `${environment.HOST_NAME}:${environment.PORT}/api/bandage`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    console.log('BandageService initialized with API URL:', this.apiUrl);
+  }
 
   getGraphInfo(): Observable<Record<string, string | number>> {
     return this.http.get<Record<string, string | number>>(this.apiUrl);
