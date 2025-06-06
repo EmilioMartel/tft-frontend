@@ -10,9 +10,7 @@ export class BandageService {
 
   private readonly apiUrl = `${environment.HOST_NAME}:${environment.PORT}/api/bandage`;
 
-  constructor(private http: HttpClient) {
-    console.log('BandageService initialized with API URL:', this.apiUrl);
-  }
+  constructor(private http: HttpClient) {}
 
   getGraphInfo(): Observable<Record<string, string | number>> {
     return this.http.get<Record<string, string | number>>(this.apiUrl);

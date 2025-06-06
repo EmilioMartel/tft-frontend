@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  HOST_NAME: 'http://host.docker.internal',
+  HOST_NAME: 'http://localhost',
   PORT: '3000',
 };
