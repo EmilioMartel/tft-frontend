@@ -16,33 +16,24 @@ El frontend permite visualizar **estructuras de grafos interactivas**, obtenidas
 ## **📂 Estructura del Proyecto**  
 ```
 📂 tft-frontend
-│   .gitignore         # Ignorar archivos innecesarios en Git
-│   package-lock.json  # Control de versiones de dependencias
-│   package.json       # Dependencias y scripts de ejecución
-│   README.md          # Documentación del proyecto
-│   tsconfig.json      # Configuración de TypeScript
-│   angular.json       # Configuración del proyecto Angular
+│   angular.json         # Configuración del proyecto Angular
+│   package.json         # Dependencias y scripts
+│   tsconfig.json        # Configuración de TypeScript
+│   README.md            # Documentación del proyecto
 │
+├───📂 public             # Archivos estáticos (favicon, index.html, etc.)
 ├───📂 src
-│   │   main.ts        # Punto de entrada principal de Angular
-│   │   styles.scss    # Estilos globales
-│   │
 │   ├───📂 app
-│   │   │   app.component.ts    # Componente raíz
-│   │   │   app.routes.ts       # Definición de rutas
-│   │   │
-│   │   ├───📂 services
-│   │   │       graph.service.ts  # Servicio para obtener datos del backend
-│   │   │
 │   │   ├───📂 components
-│   │       ├───📂 graph
-│   │       │       graph.component.ts  # Componente de visualización de grafos
-│   │       │       graph.component.html
-│   │       │       graph.component.scss
-│   │   
-│   │
-│   ├───assets        # Archivos estáticos (imágenes, íconos)
-│   ├───environments  # Configuración de entornos (dev, prod)
+│   │   │   ├───📂 graph           # Componente principal del grafo
+│   │   │   ├───📂 graph-drawer    # Renderizado SVG interactivo con D3.js
+│   │   │   └───📂 graph-menu      # Panel de control del grafo
+│   │   ├───📂 services
+│   │   │   ├───📂 bandage         # Comunicación con microservicio Bandage
+│   │   │   ├───📂 graph           # Comunicación con backend (estructura)
+│   │   │   └───📂 graph-state     # Estado reactivo con Angular Signals
+│   │   └───📂 utils               # Funciones auxiliares para procesamiento
+│   └───📂 environments            # Configuración de entornos Angular
 ```
 
 ---
@@ -69,11 +60,11 @@ npm install
 ```
 
 ### **4️⃣ Configurar Variables de Entorno**  
-Edita `src/environments/environment.ts` para configurar el backend:  
-```typescript
+Edita `src/environments/environment.ts` para configurar la URL del backend:  
+```ts
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000' // URL del backend
+  apiUrl: 'http://localhost:3000'
 };
 ```
 
@@ -82,42 +73,34 @@ export const environment = {
 ## **🚀 Modos de Ejecución**  
 
 ### **🔹 Desarrollo (Hot Reload)**
-Ejecuta el frontend en modo desarrollo con recarga automática:  
 ```bash
 ng serve
 ```
-📌 **Por defecto, estará disponible en:** [`http://localhost:4200`](http://localhost:4200)  
+📌 Disponible en: [http://localhost:4200](http://localhost:4200)
 
-### **🔹 Construcción para Producción**
-Compila el frontend optimizado para producción:  
+### **🔹 Producción**
 ```bash
-ng build
+ng build --configuration=production
 ```
-📌 **Los archivos generados estarán en `dist/tft-frontend`**.  
-
+📌 Archivos generados en `dist/tft-frontend/`.
 
 ---
 
-
 ## **📌 Tecnologías Usadas**  
 
-### **🔹 Frontend**
-- **Angular 19** (Standalone Components) 🚀  
-- **TypeScript** ✅  
-- **D3.js** (Visualización de Grafos)  
-- **RxJS Signals** (Manejo reactivo de datos)  
-- **CSS** (Estilos avanzados)  
-
+- **Angular 19** (con Standalone Components)  
+- **TypeScript**  
+- **D3.js** (para visualización SVG de grafos)  
+- **RxJS Signals**  
+- **SCSS/CSS**  
 
 ---
 
 ## **📌 Troubleshooting & Debugging**
-Si algo no funciona como esperas:  
-
-1. **Verifica que el backend está corriendo** (`http://localhost:3000`).  
-2. **Asegúrate de que las variables de entorno están configuradas**.  
-3. **Prueba limpiando la caché del navegador** (`Ctrl + Shift + R`).  
-4. **Verifica logs en la consola del navegador (`F12` → Console)**.  
+1. Verifica que el backend (`http://localhost:3000`) esté corriendo  
+2. Asegúrate de que `environment.ts` esté bien configurado  
+3. Limpia la caché del navegador (`Ctrl + Shift + R`)  
+4. Revisa la consola del navegador (`F12 → Console`)  
 
 ---
 
@@ -134,9 +117,7 @@ Más información:
 📌 **Autor**: Emilio Martel Díaz  
 🔗 **Colaboradores**: ITC, Universidad de Las Palmas de Gran Canaria (ULPGC)  
 
-Si deseas contribuir, **haz un fork del repositorio y envía un PR**. 🚀  
-
 ---
 
 ## **📜 Licencia**
-Este proyecto está bajo la licencia **ISC**. Puedes usarlo y modificarlo libremente.  
+Este proyecto está bajo la licencia **ISC**. Puedes usarlo y modificarlo libremente.
